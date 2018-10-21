@@ -1,3 +1,6 @@
+#ifndef OPERATOR__32
+#define OPERATOR__32
+
 #define Operator_LEFT_BRACKET 0
 #define Operator_RIGHT_BRACKET 1
 #define Operator_LEFT_SQUARE_BRACKET 2
@@ -13,7 +16,7 @@
 #define Operator_AND 12
 #define Operator_DIVISION 13
 #define Operator_REMAINDER 14
-#define Operator_POSItiVE 15
+#define Operator_POSITIVE 15
 #define Operator_NEGATIVE 16
 #define Operator_LEFT_SHIFT 17
 #define Operator_RIGHT_SHIFT 18
@@ -35,13 +38,11 @@
 #define Operator_MULTIPLE_ASSIGNMENT 34
 #define Operator_DIVISION_ASSIGNMENT 35
 #define Operator_AND_ASSIGNMENT 36
-#define Operator_POWER_ASSIGNMENT 37
-#define Operator_EXCLIAMATION_ASSIGNMENT 38 
-#define Operator_LEFT_SHIFT_ASSIGNMENT 39
-#define Operator_RIGHT_SHIFT_ASSIGNMENT 40
+#define Operator_OR_ASSIGNMENT 37
+#define Operator_POWER_ASSIGNMENT 38
+#define Operator_REMAINDER_ASSIGNMENT 39
+#define Operator_LEFT_SHIFT_ASSIGNMENT 40
+#define Operator_RIGHT_SHIFT_ASSIGNMENT 41
+#define Operator_DOT 42
 
-
-
-
-
-
+#endif

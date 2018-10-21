@@ -1,15 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef INPUTSTREAM__32
+#define INPUTSTREAM__32
+
+#if _MSC_VER >= 1400
+#pragma warning(disable:4996)
+#endif
 
 #define BUFFER_SIZE 1024
 
-struct InputStream
+typedef struct
 {
 	FILE * file;
 	char buffer[BUFFER_SIZE];
 	int pointer;
 	int max_size;
-};
+} InputStream;
 
 InputStream CreateStream(const char * filename)
 {
@@ -28,13 +34,21 @@ void ContinueStream(InputStream * stream)
 
 char GetFromStream(InputStream * stream)
 {
-	if (stream->pointer >= stream->max_size)
+	char result = stream->buffer[stream->pointer];
+	if (result <= 0)
+		return EOF;
+	else
+		stream->pointer++;
+	if (stream->pointer > stream->max_size)
 	{
 		ContinueStream(stream);
-		if (stream->max_size == 0)
-		{
-			return EOF;
-		}
 	}
-	return stream->buffer[stream->pointer ++];
+	return result;
 }
+
+char PeekFromStream(const InputStream * stream)
+{
+	return stream->buffer[stream->pointer];
+}
+
+#endif
