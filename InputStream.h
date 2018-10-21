@@ -28,27 +28,25 @@ InputStream CreateStream(const char * filename)
 
 void ContinueStream(InputStream * stream)
 {
-	stream->max_size = fread(stream->buffer, sizeof(char), BUFFER_SIZE, stream->file);
+	stream->max_size = fread(stream->buffer, sizeof(char), BUFFER_SIZE, stream->file);	
+	//printf("read and max_size = %d\n", stream->max_size);
 	stream->pointer = 0;
+}
+
+char PeekFromStream(InputStream * stream)
+{
+	//printf("max-size=%d now=%d\n", stream->max_size, stream->pointer);
+	if (stream->pointer >= stream->max_size)
+		ContinueStream(stream);
+	if (stream->max_size <= 0)
+		return EOF;
+	return stream->buffer[stream->pointer];
 }
 
 char GetFromStream(InputStream * stream)
 {
-	char result = stream->buffer[stream->pointer];
-	if (result <= 0)
-		return EOF;
-	else
-		stream->pointer++;
-	if (stream->pointer > stream->max_size)
-	{
-		ContinueStream(stream);
-	}
+	char result = PeekFromStream(stream);	
+	stream->pointer ++;
 	return result;
 }
-
-char PeekFromStream(const InputStream * stream)
-{
-	return stream->buffer[stream->pointer];
-}
-
 #endif
