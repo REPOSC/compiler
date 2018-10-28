@@ -2,16 +2,31 @@
 #include "InputStream.h"
 #include "judgement.h"
 #include "base.h"
+#include "debug.h"
 #include <unordered_map>
 #include <string>
 #include <cstring>
 #include <cmath>
-
 #ifndef LEX__32
 #define LEX__32
+#define Lex__DEBUG
+
+#ifdef Lex__DEBUG
+#define GetFromStream(x) _GetFromStream(x, debug_str)
+#endif
 
 class Lex
 {
+#ifdef Lex__DEBUG
+	private:
+		std::string debug_str;
+	public:
+		void Print_Clear_debug()
+		{
+			printf("本次读取的字符是%s\n解析出", debug_str.c_str());
+			debug_str = "";
+		}
+#endif
 	struct Node
 	{
 		token result_;
@@ -25,10 +40,12 @@ class Lex
 private:
 	std::unordered_map<std::string, token> GR_;
 	std::unordered_map<char, Node> GR1_, GR2_, GR3_, GR4_;
-	double get_next_int(int radix = 10)
+	InputStream m_inputstream;
+	double get_next_int(int radix = 10, bool after_dot = false)
 	{
 		char x = PeekFromStream(&m_inputstream);
 		double result = (x - '0');
+		int counter = 1;
 		while (true)
 		{
 			GetFromStream(&m_inputstream);
@@ -37,26 +54,68 @@ private:
 			{
 				result *= radix;
 				result += (x - '0');
+				++counter;
 			}
 			else
 			{
-				return result;
+				if (!after_dot)
+					return result;
+				else
+					return result/pow(10, counter);
 			}
 		}
 	}
-	double read_after_dot()
+	token read_after_dot()	//获取点号后面的小数（不包含点号）如果点号后面没有数字，则返回ERR_TOKEN
 	{
-		double result = 0;
-		double radix = 1;
-		char x = PeekFromStream(&m_inputstream);
-        while (check_if_number(x))
-        {
+		token result;
+		char x_ = PeekFromStream(&m_inputstream);
+		if (check_if_number(x_))
+		{
+			result.type = REAL_NUM;
+			result.value.real_value = get_next_int(10, true);
+			return result;
+		}
+		else
+		{
+			return ERR_TOKEN;
+		}
+	}
+	token read_after_e()	//获取e后面的整数（不包含e）如果e后面没有数字，则返回ERR_TOKEN
+	{
+		token result;
+		result.type = REAL_NUM;
+		char x_ = PeekFromStream(&m_inputstream);
+		if (x_ == '+')
+		{
 			GetFromStream(&m_inputstream);
-			radix *= 10;
-			result += (x - '0')/radix;
-			x = PeekFromStream(&m_inputstream);
-        }
-        return result;
+			char x__ = PeekFromStream(&m_inputstream);
+			if (check_if_number(x__))
+				result.value.real_value = get_next_int();
+			else
+			{
+				return ERR_TOKEN;
+			}
+		}
+		else if (x_ == '-')
+		{
+			GetFromStream(&m_inputstream);
+			char x__ = PeekFromStream(&m_inputstream);
+			if (check_if_number(x__))
+				result.value.real_value = - get_next_int();
+			else
+			{
+				return ERR_TOKEN;
+			}
+		}
+		else if (check_if_number(x_))
+		{
+			result.value.real_value = get_next_int();
+		}
+		else
+		{
+			return ERR_TOKEN;
+		}
+		return result;
 	}
 	token get_keyword()
 	{
@@ -77,20 +136,20 @@ private:
 	token get_symbol()
 	{
 		char x = GetFromStream(&m_inputstream);
-		if (x == '"')
+		if (x == '\"' || x == '\'')
 		{
 			std::string s = "\"";
 			char x_ = GetFromStream(&m_inputstream);
-			while (x_ != '"')
+			while (x_ != s[0] && x_ > 0)
 			{
 				s += x_;
 				x_ = GetFromStream(&m_inputstream);
 			}
 			token result;
-			s = s + "\"";
+			s += x;
 			result.type = STRING;
-			result.value.var_name = new char[strlen(s.c_str()) + 1];
-			strcpy(result.value.var_name, s.c_str());
+			result.value.str_name = new char[strlen(s.c_str()) + 1];
+			strcpy(result.value.str_name, s.c_str());
 			return result;		
 		}
 		else if (x == '/')
@@ -100,47 +159,51 @@ private:
 			{
 				GetFromStream(&m_inputstream);
 				x_ = GetFromStream(&m_inputstream);
-				char x__ = GetFromStream(&m_inputstream);
+				char x__ = PeekFromStream(&m_inputstream);
 				while ((x_ != '*' || x__ != '/') && x__ > 0)
 				{
-					x_ = x__;
-					x__ = GetFromStream(&m_inputstream);
+					x_ = GetFromStream(&m_inputstream);
+					x__ = PeekFromStream(&m_inputstream);
 				}
+				if (x__ > 0)
+					GetFromStream(&m_inputstream);
 				return get_token();
 			}
 		}
 		else if (x == '.')
 		{
-			if (check_if_number(PeekFromStream(&m_inputstream)))
+			char x_ = PeekFromStream(&m_inputstream);
+			if (check_if_number(x_))
 			{
-				token result_;
-				result_.type = REAL_NUM;
-				result_.value.real_value = read_after_dot();
+				token result2_ = read_after_dot();
+				token result3_, result;
 				x = PeekFromStream(&m_inputstream);
 				if (x == 'e' || x == 'E')
 				{
 					GetFromStream(&m_inputstream);
-					x = PeekFromStream(&m_inputstream);
-					if (x == '+')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int());
-					}
-					else if (x == '-')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int() * (-1));
-					}
-					else
-					{
-						result_.value.real_value *= pow(10, get_next_int());
-					}
+					result3_ = read_after_e();
+				}			
+				else
+				{
+					result3_.type = INT_NUM;
+					result3_.value.real_value = 0;
 				}
-				return result_;
+				if (result3_.type == ERR_TOKEN.type)
+				{
+					return ERR_TOKEN;
+				}
+				else
+				{
+					result.type = REAL_NUM;
+					result.value.real_value = result2_.value.real_value * pow(10, result3_.value.real_value);
+				}
+				return result;
 			}
 		}
 		if (GR1_.find(x) != GR1_.end())
+		{
 			return GR1_[x].result_;
+		}			
 		else if (GR2_.find(x) != GR2_.end())
 		{
 			char x_ = PeekFromStream(&m_inputstream);
@@ -150,7 +213,9 @@ private:
 				return GR2_[x].next->result_;
 			}
 			else
+			{
 				return GR2_[x].result_;
+			}				
 		}
 		else if (GR3_.find(x) != GR3_.end())
 		{
@@ -166,7 +231,9 @@ private:
 				return GR3_[x].next->result_;
 			}
 			else
+			{
 				return GR3_[x].result_;
+			}				
 		}
 		else if (GR4_.find(x) != GR4_.end())
 		{
@@ -181,7 +248,9 @@ private:
 					return GR4_[x].next->next->next->result_;
 				}
 				else
+				{
 					return GR4_[x].next->next->result_;
+				}					
 			}
 			else if (x_ == '=')
 			{
@@ -189,145 +258,115 @@ private:
 				return GR4_[x].next->result_;
 			}
 			else
+			{
 				return GR4_[x].result_;
+			}				
 		}
 		else
 			return ERR_TOKEN;
 	}
 	token get_number()
 	{
-		token result_;
+		token result;
+		token result1_, result2_, result3_;
 		char x = PeekFromStream(&m_inputstream);
 		if (x == '0')
 		{
-            GetFromStream(&m_inputstream);
+			GetFromStream(&m_inputstream);
 			x = PeekFromStream(&m_inputstream);
 			if (x == 'x' || x == 'X') 
 			{
-				result_.type = INT_NUM;
-				result_.value.int_value = 0;
+				result.type = INT_NUM;
+				result.value.int_value = 0;
 				while (true)
 				{
 					GetFromStream(&m_inputstream);
 					x = PeekFromStream(&m_inputstream);
 					if (check_if_number(x))
 					{
-						result_.value.int_value *= 16;
-						result_.value.int_value += (x - '0');
+						result.value.int_value *= 16;
+						result.value.int_value += (x - '0');
 					}
 					else if (x >= 'a' && x <= 'f')
 					{
-						result_.value.int_value *= 16;
-						result_.value.int_value += ((x - 'a') + 10);
+						result.value.int_value *= 16;
+						result.value.int_value += ((x - 'a') + 10);
 					}
 					else if (x >= 'A' && x <= 'F')
 					{
-						result_.value.int_value *= 16;
-						result_.value.int_value += ((x - 'A') + 10);
-					}
-					else
-						return result_;
-				}
-			}
-			else if (x == '.')
-			{
-				GetFromStream(&m_inputstream);
-				result_.type = REAL_NUM;
-				result_.value.real_value = read_after_dot();
-				x = PeekFromStream(&m_inputstream);
-				if (x == 'e' || x == 'E')
-				{
-					GetFromStream(&m_inputstream);
-					x = PeekFromStream(&m_inputstream);
-					if (x == '+')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int());
-					}
-					else if (x == '-')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int() * (-1));
+						result.value.int_value *= 16;
+						result.value.int_value += ((x - 'A') + 10);
 					}
 					else
 					{
-						result_.value.real_value *= pow(10, get_next_int());
-					}
+						return result;
+					}						
 				}
-				return result_;
 			}
-			else if (!check_if_number(x)) 
+			else if (check_if_number(x))
 			{
-				result_.type = INT_NUM;
-				result_.value.int_value = 0;
-				return result_;
+				result.type = INT_NUM;
+				result.value.int_value = get_next_int(8);
+				return result;
 			}
 			else
 			{
-				result_.type = INT_NUM;
-				result_.value.int_value = get_next_int(8);
-				return result_;
+				result1_.type = REAL_NUM;
+				result1_.value.real_value = 0;
 			}
 		}
 		else
 		{
-			result_.type = REAL_NUM;
-			result_.value.real_value = get_next_int();
-			x = PeekFromStream(&m_inputstream);
-			if (x == '.')
-			{
-				GetFromStream(&m_inputstream);
-				result_.value.real_value += read_after_dot();
-				x = PeekFromStream(&m_inputstream);
-				if (x == 'e' || x == 'E')
-				{
-					GetFromStream(&m_inputstream);
-					x = PeekFromStream(&m_inputstream);
-					if (x == '+')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int());
-					}
-					else if (x == '-')
-					{
-						GetFromStream(&m_inputstream);
-						result_.value.real_value *= pow(10, get_next_int() * (-1));
-					}
-					else
-					{
-						result_.value.real_value *= pow(10, get_next_int());
-					}
-				}
-			}
-			else if (x == 'e' || x == 'E')
-			{
-				GetFromStream(&m_inputstream);
-				x = PeekFromStream(&m_inputstream);
-				if (x == '+')
-				{
-					GetFromStream(&m_inputstream);
-					result_.value.real_value *= pow(10, get_next_int());
-				}
-				else if (x == '-')
-				{
-					GetFromStream(&m_inputstream);
-					result_.value.real_value *= pow(10, get_next_int() * (-1));
-				}
-				else
-				{
-					result_.value.real_value *= pow(10, get_next_int());
-				}
-			}
-			else
-			{
-				result_.type = INT_NUM;
-				result_.value.int_value = (int)result_.value.real_value;				
-			}
-			return result_;
+			result1_.type = REAL_NUM;
+			result1_.value.real_value = get_next_int();
 		}
-	}
 
-	InputStream m_inputstream;
+		x = PeekFromStream(&m_inputstream);
+		if (x == '.')
+		{
+			GetFromStream(&m_inputstream);
+			result2_ = read_after_dot();
+		}
+		else
+		{
+			result2_.type = INT_NUM;
+			result2_.value.real_value = 0;
+		}
+
+		x = PeekFromStream(&m_inputstream);
+		if (x == 'e' || x == 'E')
+		{
+			GetFromStream(&m_inputstream);
+			result3_ = read_after_e();
+		}			
+		else
+		{
+			result3_.type = INT_NUM;
+			result3_.value.real_value = 0;
+		}
+
+		if (result3_.type == ERR_TOKEN.type)
+		{
+			return ERR_TOKEN;
+		}
+		else if (result2_.type == ERR_TOKEN.type)
+		{
+			result.type = REAL_NUM;
+			result.value.real_value = result1_.value.real_value * pow(10, result3_.value.real_value);
+		}
+		else if (result2_.type == REAL_NUM || result3_.type == REAL_NUM)
+		{
+			result.type = REAL_NUM;
+			result.value.real_value = (result1_.value.real_value + result2_.value.real_value) * pow(10, result3_.value.real_value);
+		}
+		else
+		{
+			result.type = INT_NUM;
+			result.value.int_value = (int)result1_.value.real_value;
+		}
+		return result;
+	}
+	
 	void init()
 	{
 		for (auto i = 0; ID_[i] != ""; ++i) GR_[ID_[i]] = NAME_[i];
@@ -357,7 +396,6 @@ public:
 			return Lex::get_symbol();
 	}
 };
-
 const std::string Lex::ID_[] = {
 	"char",	"double", "float", "int", "short", "void",
 	"case",	"break", "continue", "const", "do", "else", "for", "goto", "if", "return", "switch", "while",
@@ -436,5 +474,4 @@ const Lex::Node Lex::NAME4_[] = {
 			new Node({token{OPERATOR, Operator_LEFT_SHIFT},
 				new Node({token{OPERATOR, Operator_LEFT_SHIFT_ASSIGNMENT}, nullptr})})})},
 };
-
 #endif

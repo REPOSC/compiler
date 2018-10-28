@@ -7,18 +7,21 @@ int main()
 	while (tk.type != EOF_TOKEN.type)
 	{
 		tk = lex.get_token();
+		lex.Print_Clear_debug();
 		if (tk.type == VARNAME)
-			printf("±äÁ¿ Ãû³ÆµØÖ·ÊÇ %p\n", tk.value.var_name);
+			printf("å˜é‡å åœ°å€æ˜¯ %p\n", tk.value.var_name);
 		else if (tk.type == INT_NUM)
-			printf("ÕûÊı %d\n", tk.value.int_value);
+			printf("æ•´æ•° %d\n", tk.value.int_value);
 		else if (tk.type == REAL_NUM)
-			printf("¸¡µãÊı %lf\n", tk.value.real_value);
+			printf("æµ®ç‚¹æ•° %lf\n", tk.value.real_value);
 		else if (tk.type == STRING)
-			printf("×Ö·û´® Ê××Ö·ûµØÖ·ÊÇ %p\n", tk.value.var_name);
+			printf("å­—ç¬¦ä¸² é¦–å­—ç¬¦åœ°å€æ˜¯ %p\n", tk.value.str_name);
+		else if (tk.type == ERR_TOKEN.type)
+			printf("æ— æ•ˆå­—ç¬¦!\n");
+		else if (tk.type == EOF_TOKEN.type)
+			printf("æ–‡ä»¶ç»“æŸã€‚\n");
 		else
-			printf("ÀàĞÍ£º%d %d\n", tk.type, tk.value.sym_name);
+			printf("ç±»å‹ï¼š%d %d\n", tk.type, tk.value.sym_name);
 	}
-
-	system("pause");
 	return 0;
 }

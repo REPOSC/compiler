@@ -9,19 +9,20 @@ typedef unsigned int TYPE;
 typedef unsigned int SYM_NAME;
 typedef int INTEGER;
 typedef double REAL;
-typedef char * VAR_NAME;
+typedef char * STR_NAME;
 typedef void * ADDR;
 typedef struct
 {
 	ADDR address;
 	TYPE type;
 } VAR_VALUE;
-typedef std::unordered_map<VAR_NAME, VAR_VALUE> SYMBOL_TABLE;
+typedef std::unordered_map<STR_NAME, VAR_VALUE> SYMBOL_TABLE;
 
 typedef union
 {
 	SYM_NAME sym_name;
-	VAR_NAME var_name;
+	STR_NAME var_name;
+	STR_NAME str_name;
 	INTEGER int_value;
 	REAL real_value;
 } SYM_VALUE;
