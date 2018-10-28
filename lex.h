@@ -90,7 +90,7 @@ private:
 			s = s + "\"";
 			result.type = STRING;
 			result.value.var_name = new char[strlen(s.c_str()) + 1];
-			strcat(result.value.var_name, s.c_str());
+			strcpy(result.value.var_name, s.c_str());
 			return result;		
 		}
 		else if (x == '/')
