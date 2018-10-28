@@ -19,10 +19,11 @@ Types are:
 #define VARNAME 0 /* variables */
 #define INT_NUM 1 /* integer numbers */
 #define REAL_NUM 2 /* float numbers */
-#define TYPENAME 3
-#define OPERATOR 4
-#define CONTROLLER 5
-#define DELIMITER 6
+#define STRING 3 /* string */
+#define TYPENAME 4
+#define OPERATOR 5
+#define CONTROLLER 6
+#define DELIMITER 7
 
 #define EOF_TYPE 0xff
 #define ERR_TYPE 0xfe

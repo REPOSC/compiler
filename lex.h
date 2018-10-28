@@ -77,7 +77,23 @@ private:
 	token get_symbol()
 	{
 		char x = GetFromStream(&m_inputstream);
-		if (x == '/')
+		if (x == '"')
+		{
+			std::string s = "\"";
+			char x_ = GetFromStream(&m_inputstream);
+			while (x_ != '"')
+			{
+				s += x_;
+				x_ = GetFromStream(&m_inputstream);
+			}
+			token result;
+			s = s + "\"";
+			result.type = STRING;
+			result.value.var_name = new char[strlen(s.c_str()) + 1];
+			strcat(result.value.var_name, s.c_str());
+			return result;		
+		}
+		else if (x == '/')
 		{
 			char x_ = PeekFromStream(&m_inputstream);
 			if (x_ == '*')
@@ -104,7 +120,21 @@ private:
 				if (x == 'e' || x == 'E')
 				{
 					GetFromStream(&m_inputstream);
-					result_.value.real_value *= pow(10, get_next_int());
+					x = PeekFromStream(&m_inputstream);
+					if (x == '+')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int());
+					}
+					else if (x == '-')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int() * (-1));
+					}
+					else
+					{
+						result_.value.real_value *= pow(10, get_next_int());
+					}
 				}
 				return result_;
 			}
@@ -172,7 +202,7 @@ private:
 		{
             GetFromStream(&m_inputstream);
 			x = PeekFromStream(&m_inputstream);
-			if (x == 'x') 
+			if (x == 'x' || x == 'X') 
 			{
 				result_.type = INT_NUM;
 				result_.value.int_value = 0;
@@ -208,7 +238,21 @@ private:
 				if (x == 'e' || x == 'E')
 				{
 					GetFromStream(&m_inputstream);
-					result_.value.real_value *= pow(10, get_next_int());
+					x = PeekFromStream(&m_inputstream);
+					if (x == '+')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int());
+					}
+					else if (x == '-')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int() * (-1));
+					}
+					else
+					{
+						result_.value.real_value *= pow(10, get_next_int());
+					}
 				}
 				return result_;
 			}
@@ -238,13 +282,41 @@ private:
 				if (x == 'e' || x == 'E')
 				{
 					GetFromStream(&m_inputstream);
-					result_.value.real_value *= pow(10, get_next_int());
+					x = PeekFromStream(&m_inputstream);
+					if (x == '+')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int());
+					}
+					else if (x == '-')
+					{
+						GetFromStream(&m_inputstream);
+						result_.value.real_value *= pow(10, get_next_int() * (-1));
+					}
+					else
+					{
+						result_.value.real_value *= pow(10, get_next_int());
+					}
 				}
 			}
 			else if (x == 'e' || x == 'E')
 			{
 				GetFromStream(&m_inputstream);
-				result_.value.real_value *= pow(10, get_next_int());
+				x = PeekFromStream(&m_inputstream);
+				if (x == '+')
+				{
+					GetFromStream(&m_inputstream);
+					result_.value.real_value *= pow(10, get_next_int());
+				}
+				else if (x == '-')
+				{
+					GetFromStream(&m_inputstream);
+					result_.value.real_value *= pow(10, get_next_int() * (-1));
+				}
+				else
+				{
+					result_.value.real_value *= pow(10, get_next_int());
+				}
 			}
 			else
 			{
