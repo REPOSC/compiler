@@ -21,6 +21,8 @@ InputStream CreateStream(const char * filename)
 {
 	InputStream result;
 	result.file = fopen(filename, "r");
+	if (result.file == NULL)
+		return result;
 	result.max_size = fread(result.buffer, sizeof(char), BUFFER_SIZE, result.file);
 	result.pointer = 0;
 	return result;

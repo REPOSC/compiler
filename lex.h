@@ -9,10 +9,17 @@
 #include <cmath>
 #ifndef LEX__32
 #define LEX__32
+
+typedef struct {} File_Error;
 #define Lex__DEBUG
 
 #ifdef Lex__DEBUG
 #define GetFromStream(x) _GetFromStream(x, debug_str)
+#define Symbol() Print_Symbol()
+#define Symbol_Token() Print_Symbol_Token()
+#else
+#define Symbol() _empty()
+#define Symbol_Token() _empty()
 #endif
 
 class Lex
@@ -21,11 +28,27 @@ class Lex
 	private:
 		std::string debug_str;
 	public:
-		void Print_Clear_debug()
+		void Print_Symbol_Token()
 		{
-			printf("本次读取的字符是%s\n解析出", debug_str.c_str());
+			if (debug_str[0] > 0)
+				printf("本次读取的字符是%s, 解析出", debug_str.c_str());
+			else
+				printf("本次读取的字符是EOF, 解析出", debug_str.c_str());
 			debug_str = "";
 		}
+		void Print_Symbol()
+		{
+			if (debug_str == "\n") printf("换行符号已经直接扔掉，不返回标识符\n"); 
+			else if (debug_str == "\r") printf("回车符号已经直接扔掉，不返回标识符\n"); 
+			else if (debug_str == " ") printf("空格已经直接扔掉，不返回标识符\n"); 
+			else if (debug_str == "\t")  printf("制表符已经直接扔掉，不返回标识符\n"); 
+			else printf("读到符号：【%s】已经直接扔掉，不返回标识符\n", debug_str.c_str());
+			debug_str = "";
+		}
+#else
+	public:
+		inline void _empty() {/* Do nothing */}
+	private:
 #endif
 	struct Node
 	{
@@ -137,7 +160,7 @@ private:
 	{
 		char x = GetFromStream(&m_inputstream);
 		if (x == '\"' || x == '\'')
-		{
+		{			
 			std::string s = "\"";
 			char x_ = GetFromStream(&m_inputstream);
 			while (x_ != s[0] && x_ > 0)
@@ -158,15 +181,21 @@ private:
 			if (x_ == '*')
 			{
 				GetFromStream(&m_inputstream);
-				x_ = GetFromStream(&m_inputstream);
+				x_ = PeekFromStream(&m_inputstream);
+				if (x_ < 0)
+					return EOF_TOKEN;
+				else
+					GetFromStream(&m_inputstream);
 				char x__ = PeekFromStream(&m_inputstream);
 				while ((x_ != '*' || x__ != '/') && x__ > 0)
 				{
-					x_ = GetFromStream(&m_inputstream);
+					x_ = x__;
+					GetFromStream(&m_inputstream);
 					x__ = PeekFromStream(&m_inputstream);
 				}
 				if (x__ > 0)
 					GetFromStream(&m_inputstream);
+				Symbol();
 				return get_token();
 			}
 		}
@@ -369,7 +398,7 @@ private:
 	
 	void init()
 	{
-		for (auto i = 0; ID_[i] != ""; ++i) GR_[ID_[i]] = NAME_[i];
+		for (auto i = 0; ID_[i][0]; ++i) GR_[ID_[i]] = NAME_[i];
 		for (auto i = 0; ID1_[i]; ++i) GR1_[ID1_[i]] = NAME1_[i];
 		for (auto i = 0; ID2_[i]; ++i) GR2_[ID2_[i]] = NAME2_[i];
 		for (auto i = 0; ID3_[i]; ++i) GR3_[ID3_[i]] = NAME3_[i];
@@ -380,11 +409,16 @@ public:
 	{
 		init();
 		m_inputstream = CreateStream(filename);
+		if (m_inputstream.file == NULL){
+			throw File_Error();
+		}
 	}
 	token get_token()
 	{
-		while (check_if_blank(PeekFromStream(&m_inputstream)))
+		while (check_if_blank(PeekFromStream(&m_inputstream))){
 			GetFromStream(&m_inputstream);
+			Symbol();
+		}
 		char peek_char = PeekFromStream(&m_inputstream);
 		if (peek_char <= 0)
 			return EOF_TOKEN;

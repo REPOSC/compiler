@@ -1,3 +1,4 @@
+#include "InputStream.h"
 #include <string>
 
 char _GetFromStream(InputStream * stream, std::string & debug_str)
