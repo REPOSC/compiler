@@ -21,15 +21,16 @@ int main(int argc, char ** argv)
 			lex.Symbol_Token();
 			switch(tk.type)
 			{
-				case VARNAME:    printf("å˜é‡å åœ°å€æ˜¯ %p\n", tk.value.var_name); break;
-				case INT_NUM:    printf("æ•´æ•° %d\n", tk.value.int_value); break;
-				case REAL_NUM:   printf("æµ®ç‚¹æ•° %lf\n", tk.value.real_value); break;
-				case STRING:     printf("å­—ç¬¦ä¸² é¦–å­—ç¬¦åœ°å€æ˜¯ %p\n", tk.value.str_name); break;
-				case DELIMITER:  printf("åˆ†å‰²ç¬¦ å…¶ç±»å‹ç¼–å·æ˜¯ %d\n", tk.value.sym_name); break;
-				case CONTROLLER: printf("æ§åˆ¶å­—ç¬¦ å…¶ç±»å‹ç¼–å·æ˜¯ %d\n", tk.value.sym_name); break;
-				case OPERATOR:   printf("è¿ç®—ç¬¦ å…¶ç±»å‹ç¼–å·æ˜¯ %d\n", tk.value.sym_name); break;
-				case ERR_TYPE:   printf("æ— æ•ˆå­—ç¬¦!\n"); break;
-				case EOF_TYPE:   printf("æ–‡ä»¶ç»“æŸã€‚\n"); break;
+			    case TYPENAME:   printf("¡¾ÀàĞÍ±íÊ¾·û¡¿ ÀàĞÍ±àºÅ£º%d\n", tk.value.sym_name); break;
+				case VARNAME:    printf("¡¾±äÁ¿Ãû¡¿ ±äÁ¿µØÖ·£º%p\n", tk.value.var_name); break;
+				case INT_NUM:    printf("¡¾ÕûÊı¡¿ %d\n", tk.value.int_value); break;
+				case REAL_NUM:   printf("¡¾¸¡µãÊı¡¿ %lf\n", tk.value.real_value); break;
+				case STRING:     printf("¡¾×Ö·û´®¡¿ Ê××Ö·ûµØÖ·£º%p\n", tk.value.str_name); break;
+				case DELIMITER:  printf("¡¾·Ö¸ô·û¡¿ ÀàĞÍ±àºÅ£º%d\n", tk.value.sym_name); break;
+				case CONTROLLER: printf("¡¾¿ØÖÆ·û¡¿ ÀàĞÍ±àºÅ£º%d\n", tk.value.sym_name); break;
+				case OPERATOR:   printf("¡¾ÔËËã·û¡¿ ÀàĞÍ±àºÅ£º%d\n", tk.value.sym_name); break;
+				case ERR_TYPE:   printf("ÎŞĞ§×Ö·û£¡\n"); break;
+				case EOF_TYPE:   printf("ÎÄ¼ş½áÊø¡£\n"); break;
 			}
 		}
 		return 0;

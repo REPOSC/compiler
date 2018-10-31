@@ -31,18 +31,18 @@ class Lex
 		void Print_Symbol_Token()
 		{
 			if (debug_str[0] > 0)
-				printf("æœ¬æ¬¡è¯»å–çš„å­—ç¬¦æ˜¯%s, è§£æå‡º", debug_str.c_str());
+				printf("¶ÁÈ¡µ½×Ö·û ¡¾ %s ¡¿ £¬½âÎö³ö", debug_str.c_str());
 			else
-				printf("æœ¬æ¬¡è¯»å–çš„å­—ç¬¦æ˜¯EOF, è§£æå‡º", debug_str.c_str());
+				printf("¶ÁÈ¡µ½×Ö·û ¡¾ EOF ¡¿ £¬½âÎö³ö", debug_str.c_str());
 			debug_str = "";
 		}
 		void Print_Symbol()
 		{
-			if (debug_str == "\n") printf("æ¢è¡Œç¬¦å·å·²ç»ç›´æ¥æ‰”æ‰ï¼Œä¸è¿”å›æ ‡è¯†ç¬¦\n"); 
-			else if (debug_str == "\r") printf("å›è½¦ç¬¦å·å·²ç»ç›´æ¥æ‰”æ‰ï¼Œä¸è¿”å›æ ‡è¯†ç¬¦\n"); 
-			else if (debug_str == " ") printf("ç©ºæ ¼å·²ç»ç›´æ¥æ‰”æ‰ï¼Œä¸è¿”å›æ ‡è¯†ç¬¦\n"); 
-			else if (debug_str == "\t")  printf("åˆ¶è¡¨ç¬¦å·²ç»ç›´æ¥æ‰”æ‰ï¼Œä¸è¿”å›æ ‡è¯†ç¬¦\n"); 
-			else printf("è¯»åˆ°ç¬¦å·ï¼šã€%sã€‘å·²ç»ç›´æ¥æ‰”æ‰ï¼Œä¸è¿”å›æ ‡è¯†ç¬¦\n", debug_str.c_str());
+			if (debug_str == "\n") printf("»»ĞĞ·û£¬ºöÂÔ\n"); 
+			else if (debug_str == "\r") printf("»Ø³µ·ûºÅ£¬ºöÂÔ\n"); 
+			else if (debug_str == " ") printf("¿Õ¸ñ£¬ºöÂÔ\n"); 
+			else if (debug_str == "\t")  printf("ÖÆ±í·û£¬ºöÂÔ\n"); 
+			else printf("¶ÁÈ¡µ½·ûºÅ ¡¾%s¡¿£¬ºöÂÔ\n", debug_str.c_str());
 			debug_str = "";
 		}
 #else
@@ -88,7 +88,7 @@ private:
 			}
 		}
 	}
-	token read_after_dot()	//è·å–ç‚¹å·åé¢çš„å°æ•°ï¼ˆä¸åŒ…å«ç‚¹å·ï¼‰å¦‚æœç‚¹å·åé¢æ²¡æœ‰æ•°å­—ï¼Œåˆ™è¿”å›ERR_TOKEN
+	token read_after_dot()	//»ñÈ¡µãºÅºóÃæµÄĞ¡Êı£¨²»°üº¬µãºÅ£©£¬Èç¹ûµãºÅºóÃæÃ»ÓĞÊı×Ö£¬Ôò·µ»ØERR_TOKEN
 	{
 		token result;
 		char x_ = PeekFromStream(&m_inputstream);
@@ -103,7 +103,7 @@ private:
 			return ERR_TOKEN;
 		}
 	}
-	token read_after_e()	//è·å–eåé¢çš„æ•´æ•°ï¼ˆä¸åŒ…å«eï¼‰å¦‚æœeåé¢æ²¡æœ‰æ•°å­—ï¼Œåˆ™è¿”å›ERR_TOKEN
+	token read_after_e()	//»ñÈ¡eºóÃæµÄÕûÊı£¨²»°üº¬e£©£¬Èç¹ûeºóÃæÃ»ÓĞÊı×Ö£¬Ôò·µ»ØERR_TOKEN
 	{
 		token result;
 		result.type = REAL_NUM;
