@@ -38,10 +38,10 @@ class Lex
 		}
 		void Print_Symbol()
 		{
-			if (debug_str == "\n") printf("换行符，忽略\n"); 
-			else if (debug_str == "\r") printf("回车符号，忽略\n"); 
-			else if (debug_str == " ") printf("空格，忽略\n"); 
-			else if (debug_str == "\t")  printf("制表符，忽略\n"); 
+			if (debug_str == "\n") printf("读取到换行符，忽略\n"); 
+			else if (debug_str == "\r") printf("读取到回车符号，忽略\n"); 
+			else if (debug_str == " ") printf("读取到空格，忽略\n"); 
+			else if (debug_str == "\t")  printf("读取到制表符，忽略\n"); 
 			else printf("读取到符号 【%s】，忽略\n", debug_str.c_str());
 			debug_str = "";
 		}

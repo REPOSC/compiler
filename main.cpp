@@ -33,6 +33,7 @@ int main(int argc, char ** argv)
 				case EOF_TYPE:   printf("ÎÄ¼ş½áÊø¡£\n"); break;
 			}
 		}
+		system("pause");
 		return 0;
 	}
 	catch (File_Error)
