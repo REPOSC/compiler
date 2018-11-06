@@ -16,7 +16,6 @@ typedef struct
 	ADDR address;
 	TYPE type;
 } VAR_VALUE;
-typedef std::unordered_map<STR_NAME, VAR_VALUE> SYMBOL_TABLE;
 
 typedef union
 {
@@ -32,6 +31,9 @@ typedef struct
 	SYM_TYPE type;
 	SYM_VALUE value;
 }token;
+
+typedef std::unordered_map<STR_NAME, VAR_VALUE> SYMBOL_TABLE;
+typedef std::vector<token> TOKEN_SET;
 
 /* Now there is a token for example. */
 token EOF_TOKEN{ EOF_TYPE, 0xff };

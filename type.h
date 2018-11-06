@@ -24,6 +24,7 @@ Types are:
 #define OPERATOR 5
 #define CONTROLLER 6
 #define DELIMITER 7
+#define MAIN 8
 
 #define EOF_TYPE 0xff
 #define ERR_TYPE 0xfe

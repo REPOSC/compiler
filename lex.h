@@ -28,21 +28,29 @@ class Lex
 	private:
 		std::string debug_str;
 	public:
-		void Print_Symbol_Token()
+		char * Print_Symbol_Token()
 		{
+			char * read_str;
 			if (debug_str[0] > 0)
-				printf("读取到字符 【 %s 】 ，解析出", debug_str.c_str());
+			{
+				printf("%-15s", debug_str.c_str());
+				read_str = (char*)debug_str.c_str();
+			}
 			else
-				printf("读取到字符 【 EOF 】 ，解析出", debug_str.c_str());
+			{
+				printf("EOF            ", debug_str.c_str());
+				read_str = NULL;
+			}
 			debug_str = "";
+			return read_str;
 		}
 		void Print_Symbol()
 		{
-			if (debug_str == "\n") printf("读取到换行符，忽略\n"); 
-			else if (debug_str == "\r") printf("读取到回车符号，忽略\n"); 
-			else if (debug_str == " ") printf("读取到空格，忽略\n"); 
-			else if (debug_str == "\t")  printf("读取到制表符，忽略\n"); 
-			else printf("读取到符号 【%s】，忽略\n", debug_str.c_str());
+			//if (debug_str == "\n") printf("读取到换行符，忽略\n");
+			//else if (debug_str == "\r") printf("读取到回车符号，忽略\n");
+			//else if (debug_str == " ") printf("读取到空格，忽略\n");
+			//else if (debug_str == "\t") printf("读取到制表符，忽略\n");
+			//else printf("【%s】，忽略\n", debug_str.c_str());
 			debug_str = "";
 		}
 #else
@@ -147,6 +155,12 @@ private:
 			s += GetFromStream(&m_inputstream);
 		if (GR_.find(s) != GR_.end())
 			return GR_[s];
+		else if (s == "main")
+		{
+			token result_;
+			result_.type = MAIN;
+			return result_;
+		}
 		else
 		{
 			token result_;
