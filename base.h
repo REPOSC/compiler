@@ -1,4 +1,5 @@
 #include "type.h"
+#include <vector>
 #include <unordered_map>
 #include <string>
 #ifndef BASE__32

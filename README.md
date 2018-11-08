@@ -12,7 +12,7 @@
 
 ### 2、g++编译方法
 
-* 输入命令 g++ -finput-charset=gbk main.cpp -o reposc 可以编译成可执行文件reposc
+* 输入命令 `g++ -finput-charset=gbk --std=c++11 main.cpp -o reposc` 可以编译成可执行文件reposc
 
 * 将所对应的文件和编译出的可执行文件放在一起，并带参数运行：
   `./reposc 1.txt`
