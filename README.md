@@ -8,7 +8,7 @@
 
 * 将所对应的文件放入项目的 `.vcxproj` 文件所在的目录里
 
-  ![readme1](.\readme1.png)
+  ![readme1](./readme1.png)
 
 ### 2、g++编译方法
 
