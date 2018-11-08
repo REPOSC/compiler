@@ -33,8 +33,9 @@ class Lex
 			char * read_str;
 			if (debug_str[0] > 0)
 			{
+				read_str = new char[debug_str.length()+1];
 				printf("%-15s", debug_str.c_str());
-				read_str = (char*)debug_str.c_str();
+				strcpy(read_str, debug_str.c_str());
 			}
 			else
 			{

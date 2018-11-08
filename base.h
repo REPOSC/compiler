@@ -32,7 +32,7 @@ typedef struct
 	SYM_VALUE value;
 }token;
 
-typedef std::unordered_map<STR_NAME, VAR_VALUE> SYMBOL_TABLE;
+typedef std::unordered_map<std::string, VAR_VALUE*> SYMBOL_TABLE;
 typedef std::vector<token> TOKEN_SET;
 
 /* Now there is a token for example. */

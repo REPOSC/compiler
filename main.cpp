@@ -1,5 +1,5 @@
 #include "lex.h"
-
+#include<iostream>
 int main(int argc, char ** argv)
 {
 	if (argc <= 1)
@@ -25,30 +25,28 @@ int main(int argc, char ** argv)
 			var_name = lex.Symbol_Token();
 			switch(tk.type)
 			{
-			    case TYPENAME:   printf("【类型表示符】 类型编号：%d\n", tk.value.sym_name); break;
-				case INT_NUM:    printf("【整数】       %d\n", tk.value.int_value); break;
-				case REAL_NUM:   printf("【浮点数】     %lf\n", tk.value.real_value); break;
-				case STRING:     printf("【字符串】     首字符地址：%p\n", tk.value.str_name); break;
-				case DELIMITER:  printf("【分隔符】     类型编号：%d\n", tk.value.sym_name); break;
-				case CONTROLLER: printf("【控制符】     类型编号：%d\n", tk.value.sym_name); break;
-				case OPERATOR:   printf("【运算符】     类型编号：%d\n", tk.value.sym_name); break;
-				case MAIN:       printf("【MAIN】\n"); break;
-				case ERR_TYPE:   printf("无效字符！\n"); break;
-				case EOF_TYPE:   printf("文件结束。\n"); break;
-				case VARNAME:    
+                case TYPENAME:   printf("【类型表示符】 类型编号：%d\n", tk.value.sym_name); break;
+                case INT_NUM:    printf("【整数】       %d\n", tk.value.int_value); break;
+                case REAL_NUM:   printf("【浮点数】     %lf\n", tk.value.real_value); break;
+                case STRING:     printf("【字符串】     首字符地址：%p\n", tk.value.str_name); break;
+                case DELIMITER:  printf("【分隔符】     类型编号：%d\n", tk.value.sym_name); break;
+                case CONTROLLER: printf("【控制符】     类型编号：%d\n", tk.value.sym_name); break;
+                case OPERATOR:   printf("【运算符】     类型编号：%d\n", tk.value.sym_name); break;
+                case MAIN:       printf("【MAIN】\n"); break;
+                case ERR_TYPE:   printf("无效字符！\n"); break;
+                case EOF_TYPE:   printf("文件结束。\n"); break;
+                case VARNAME: 
 					if (one_symbol_table.find(var_name) != one_symbol_table.end())
 					{
-						printf("【变量名】     变量地址：%p\n", one_symbol_table[var_name].address);
-						break;
+						printf("【变量名】     变量地址：%p\n", one_symbol_table[var_name]->address);
 					}
 					else
 					{
-						VAR_VALUE one = { new char *, 0 };
+						VAR_VALUE * one = new VAR_VALUE{new void *, 0};
 						one_symbol_table[var_name] = one;
-						printf("【变量名】     变量地址：%p\n", one_symbol_table[var_name].address);
-						break;
+						printf("【变量名】     变量地址：%p\n", one_symbol_table[var_name]->address);
 					}
-
+					break;
 			}
 		}
 		system("pause");
