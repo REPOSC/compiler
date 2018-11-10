@@ -1,5 +1,4 @@
 #include "lex.h"
-
 int main(int argc, char ** argv)
 {
 	if (argc <= 1)
@@ -22,7 +21,7 @@ int main(int argc, char ** argv)
 		{
 			tk = lex.get_token();
 			one_token_set.push_back(tk);
-			var_name = lex.Symbol_Token();
+			lex.Symbol_Token();
 			switch(tk.type)
 			{
                 case TYPENAME:   printf("【类型表示符】 类型编号：%d\n", tk.value.sym_name); break;
@@ -36,6 +35,7 @@ int main(int argc, char ** argv)
                 case ERR_TYPE:   printf("无效字符！\n"); break;
                 case EOF_TYPE:   printf("文件结束。\n"); break;
                 case VARNAME: 
+					var_name = one_token_set.back().value.var_name;
 					if (one_symbol_table.find(var_name) != one_symbol_table.end())
 					{
 						printf("【变量名】     变量地址：%p\n", one_symbol_table[var_name]->address);
