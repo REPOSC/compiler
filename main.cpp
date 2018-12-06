@@ -1,6 +1,20 @@
 #include "lex.h"
+#include "yacc.h"
+
 int main(int argc, char ** argv)
 {
+	freopen("1.csv", "w", stdout);
+	std::vector<std::string> t{ "a", "b" };
+	std::vector<std::string> u{ "S", "A" };
+	std::vector<std::string> g{
+		"S->A S",
+		"A->S A",
+		"S->b",
+		"A->a"
+	};
+	Yacc y(t, u, "S");
+	y.Build_LR1(g);
+	y.print();
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Fetal: No input file.\n");
