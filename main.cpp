@@ -4,17 +4,20 @@
 int main(int argc, char ** argv)
 {
 	freopen("1.csv", "w", stdout);
-	std::vector<std::string> t{ "a", "b" };
-	std::vector<std::string> u{ "S", "A" };
+	std::vector<std::string> t{ "i", "plus", "multi", "spleft", "spright"};
+	std::vector<std::string> u{ "E", "T", "F" };
 	std::vector<std::string> g{
-		"S->A S",
-		"A->S A",
-		"S->b",
-		"A->a"
+		"E->E plus T",
+		"E-> T",
+		"T->T multi F",
+		"T-> F",
+		"F-> i",
+		"F-> spleft E spright"
 	};
-	Yacc y(t, u, "S");
+	Yacc y(t, u, "E");
 	y.Build_LR1(g);
 	y.print();
+	y.check();
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Fetal: No input file.\n");

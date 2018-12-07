@@ -40,9 +40,10 @@ bool operator == (statement & p1, statement & p2) {
 	return p1.projects == p2.projects;
 }
 typedef struct { char action; int index; } movement;
-typedef struct {} Invalid_start_word;
-typedef struct { int index; int pointer; } Invalid_2nd_grammar;
-
+typedef std::unordered_map<std::string, std::vector<movement> > table_item;
+typedef struct {} invalid_start_word;
+typedef struct { int index; int pointer; } invalid_2nd_grammar;
+typedef struct { int statement_index; table_item error_item; } ambiguous_2nd_grammar;
 class Yacc
 {
 private: 
@@ -55,7 +56,7 @@ private:
 	std::unordered_map<std::string, receivers> signal_table;
 	std::unordered_map<std::string, first_set> firsts;
 	std::vector<statement> m_statements;
-	std::vector<std::unordered_map<std::string, std::vector<movement> > > movement_table;
+	std::vector<table_item> movement_table;
 
 	bool is_sep(char x) { return x == ' ' || x == '\t' || x == '\f'; };
 	bool is_end(char x) { return x == '\n' || x == '\0'; }
@@ -68,16 +69,16 @@ private:
 		std::string begin_word;
 		std::string after_word;
 		while (is_sep(grammar_str[pointer])) pointer++;
-		if (is_end(grammar_str[pointer])) throw Invalid_2nd_grammar{ index, pointer };		
+		if (is_end(grammar_str[pointer])) throw invalid_2nd_grammar{ index, pointer };		
 		while (is_alpha(grammar_str[pointer])) begin_word += grammar_str[pointer++];
 		while (is_sep(grammar_str[pointer])) pointer++;
-		if (is_end(grammar_str[pointer])) throw Invalid_2nd_grammar{ index, pointer };
+		if (is_end(grammar_str[pointer])) throw invalid_2nd_grammar{ index, pointer };
 		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), begin_word) != m_un_terminators.end())
 			result.before_word = begin_word;
 		else
-			throw Invalid_2nd_grammar{ index, pointer };
+			throw invalid_2nd_grammar{ index, pointer };
 		if (!(grammar_str[pointer++] == '-' && grammar_str[pointer++] == '>'))
-			throw Invalid_2nd_grammar{ index, pointer };
+			throw invalid_2nd_grammar{ index, pointer };
 		while (is_sep(grammar_str[pointer])) pointer++;
 		while (!is_end(grammar_str[pointer])) {			
 			if (is_sep(grammar_str[pointer])) {
@@ -86,14 +87,14 @@ private:
 					|| std::find(m_terminators.begin(), m_terminators.end(), after_word) != m_terminators.end())
 					result.after_words.push_back(after_word);
 				else
-					throw Invalid_2nd_grammar{ index, pointer };
+					throw invalid_2nd_grammar{ index, pointer };
 				after_word = "";
 				while (is_sep(grammar_str[pointer])) pointer++;
 			}
 			else if (is_alpha(grammar_str[pointer])) after_word += grammar_str[pointer++];
 		}
 		if (after_word[0]) result.after_words.push_back(after_word);
-		if (result.after_words.size() <= 0) throw Invalid_2nd_grammar{ index, pointer };
+		if (result.after_words.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
 		return result;
 	}
 	grammar agm_grammars() {
@@ -250,23 +251,23 @@ private:
 	void build_table() {
 		/* Build tate transition table by current m_statements, and store it in movement_table */
 		for (auto statement : m_statements) {
-			std::unordered_map<std::string, std::vector<movement> > table_item;
+			table_item current_item;
 			for (auto terminator : m_terminators) {
 				if (statement.convert_to.find(terminator) != statement.convert_to.end()) {
-					table_item[terminator].push_back({ 's',statement.convert_to[terminator] });
+					current_item[terminator].push_back({ 's',statement.convert_to[terminator] });
 				}				
 			}
 			for (auto un_terminator : m_un_terminators) {
 				if (statement.convert_to.find(un_terminator) != statement.convert_to.end()) {
-					table_item[un_terminator].push_back({ ' ',statement.convert_to[un_terminator] });
+					current_item[un_terminator].push_back({ ' ',statement.convert_to[un_terminator] });
 				}
 			}
 			for (auto current_proj : statement.projects) {
 				if (current_proj.pointer == grammars[current_proj.grammar_index].after_words.size()) {
-					table_item[current_proj.forward_word].push_back({ 'r', current_proj.grammar_index });
+					current_item[current_proj.forward_word].push_back({ 'r', current_proj.grammar_index });
 				}
 			}
-			movement_table.push_back(table_item);
+			movement_table.push_back(current_item);
 		}
 	}
 public:
@@ -276,7 +277,7 @@ public:
 		m_terminators.insert(eof_str);
 		for (auto current_word : un_terminators) m_un_terminators.insert(current_word);
 		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), start_word) == m_un_terminators.end()) 
-			throw Invalid_start_word();
+			throw invalid_start_word();
 		else m_start_word = start_word;
 	}
 	void Build_LR1(std::vector<std::string> grammar_str) {
@@ -325,6 +326,14 @@ public:
 		if (grammars[proj.grammar_index].after_words.size() == proj.pointer) 
 			std::cout << ".";
 		std::cout << "[" << proj.forward_word << "]" << std::endl;
+	}
+	void check() {
+		for (int i = 0; i < movement_table.size(); ++i) {
+			for (auto j : movement_table[i]) {
+				if (j.second.size() > 1)
+					throw ambiguous_2nd_grammar({ i, movement_table[i]});
+			}			
+		}
 	}
 	void print(){
 		std::cout<<"signals:"<<std::endl;
