@@ -15,9 +15,9 @@ int main(int argc, char ** argv)
 		"F   ->  ( E    )"
 	};
 	Yacc y(t, u, "E");
-	y.Build_LR1(g);
+	y.build_LR1(g);
 	y.print();
-	y.check();
+	y.analyze("( i * i * ( i + i ) ) * i");
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Fetal: No input file.\n");
