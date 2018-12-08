@@ -64,38 +64,35 @@ private:
 
 	grammar get_grammar(std::string grammar_str, int index) {
 		/* To parse grammar from grammar string */
-		grammar result;
-		int pointer = 0;
-		std::string begin_word;
+		grammar result;		
 		std::string after_word;
-		while (is_sep(grammar_str[pointer])) pointer++;
-		if (is_end(grammar_str[pointer])) throw invalid_2nd_grammar{ index, pointer };		
-		while (is_alpha(grammar_str[pointer])) begin_word += grammar_str[pointer++];
-		while (is_sep(grammar_str[pointer])) pointer++;
-		if (is_end(grammar_str[pointer])) throw invalid_2nd_grammar{ index, pointer };
-		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), begin_word) != m_un_terminators.end())
-			result.before_word = begin_word;
-		else
-			throw invalid_2nd_grammar{ index, pointer };
-		if (!(grammar_str[pointer++] == '-' && grammar_str[pointer++] == '>'))
-			throw invalid_2nd_grammar{ index, pointer };
-		while (is_sep(grammar_str[pointer])) pointer++;
-		while (!is_end(grammar_str[pointer])) {			
-			if (is_sep(grammar_str[pointer])) {
-				pointer++;
-				if (std::find(m_un_terminators.begin(), m_un_terminators.end(), after_word) != m_un_terminators.end()
-					|| std::find(m_terminators.begin(), m_terminators.end(), after_word) != m_terminators.end())
-					result.after_words.push_back(after_word);
-				else
-					throw invalid_2nd_grammar{ index, pointer };
-				after_word = "";
-				while (is_sep(grammar_str[pointer])) pointer++;
+		int pointer = 0;
+		while (is_sep(grammar_str[pointer])) ++pointer;
+		int before_arrow = grammar_str.find("->");
+		if (before_arrow != std::string::npos){
+			while (pointer != before_arrow && !is_sep(grammar_str[pointer])) result.before_word += grammar_str[pointer++];
+			while (pointer < before_arrow) ++pointer;
+			pointer += sizeof("->") / sizeof(char);
+			if (result.before_word.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
+			while (is_sep(grammar_str[pointer])) ++pointer;
+			while (!is_end(grammar_str[pointer])) {
+				if (is_sep(grammar_str[pointer])) {
+					++pointer;
+					if (std::find(m_un_terminators.begin(), m_un_terminators.end(), after_word) != m_un_terminators.end()
+						|| std::find(m_terminators.begin(), m_terminators.end(), after_word) != m_terminators.end())
+						result.after_words.push_back(after_word);
+					else
+						throw invalid_2nd_grammar{ index, pointer };
+					after_word = "";
+					while (is_sep(grammar_str[pointer])) ++pointer;
+				}
+				else after_word += grammar_str[pointer++];
 			}
-			else if (is_alpha(grammar_str[pointer])) after_word += grammar_str[pointer++];
+			if (after_word[0]) result.after_words.push_back(after_word);
+			if (result.after_words.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
+			return result;
 		}
-		if (after_word[0]) result.after_words.push_back(after_word);
-		if (result.after_words.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
-		return result;
+		else throw invalid_2nd_grammar{ index, pointer };
 	}
 	grammar agm_grammars() {
 		/* Augment to current grammars */

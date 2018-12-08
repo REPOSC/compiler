@@ -4,15 +4,15 @@
 int main(int argc, char ** argv)
 {
 	freopen("1.csv", "w", stdout);
-	std::vector<std::string> t{ "i", "plus", "multi", "spleft", "spright"};
+	std::vector<std::string> t{ "i", "+", "*", "(", ")"};
 	std::vector<std::string> u{ "E", "T", "F" };
 	std::vector<std::string> g{
-		"E->E plus T",
-		"E-> T",
-		"T->T multi F",
-		"T-> F",
-		"F-> i",
-		"F-> spleft E spright"
+		" E-> E + T",
+		" E-> T",
+		"T-> T *   F ",
+		"T-> F    ",
+		"F  -> i ",
+		"F   ->  ( E    )"
 	};
 	Yacc y(t, u, "E");
 	y.Build_LR1(g);
