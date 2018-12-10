@@ -1,9 +1,12 @@
 #include "lex.h"
 #include "yacc.h"
+#include<fstream>
 
 int main(int argc, char ** argv)
 {
+
 	freopen("1.csv", "w", stdout);
+/*
 	std::vector<std::string> t{ "i", "+", "*", "(", ")"};
 	std::vector<std::string> u{ "E", "T", "F" };
 	std::vector<std::string> g{
@@ -13,7 +16,38 @@ int main(int argc, char ** argv)
 		"T-> F    ",
 		"F  -> i ",
 		"F   ->  ( E    )"
-	};
+*/
+	std::vector<std::string> t{};
+	std::vector<std::string> u{};
+	std::vector<std::string> g{};
+
+	std::ifstream fin1("context_free_grammar.txt");
+	std::string str1;
+	while ( getline(fin1,str1) )
+	{
+		std::cout << "G: " << str1 << std::endl;
+		g.push_back(str1);
+	}
+	fin1.close();
+
+	std::ifstream fin2("U.txt");
+	std::string str2;
+	while (getline(fin2, str2))
+	{
+		std::cout << "U: " << str2 << std::endl;
+		u.push_back(str2);
+	}
+	fin2.close();
+
+	std::ifstream fin3("T.txt");
+	std::string str3;
+	while (getline(fin3, str3))
+	{
+		std::cout << "T: " << str3 << std::endl;
+		t.push_back(str3);
+	}
+	fin3.close();
+
 	Yacc y(t, u, "E");
 	y.build_LR1(g);
 	y.print();
