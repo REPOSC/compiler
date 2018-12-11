@@ -5,7 +5,7 @@
 int main(int argc, char ** argv)
 {
 
-	freopen("1.csv", "w", stdout);
+//	freopen("1.csv", "w", stdout);
 /*
 	std::vector<std::string> t{ "i", "+", "*", "(", ")"};
 	std::vector<std::string> u{ "E", "T", "F" };
@@ -17,20 +17,22 @@ int main(int argc, char ** argv)
 		"F  -> i ",
 		"F   ->  ( E    )"
 */
+
 	std::vector<std::string> t{};
 	std::vector<std::string> u{};
 	std::vector<std::string> g{};
 
-	std::ifstream fin1("context_free_grammar.txt");
+	std::ifstream fin1("D:\\download\\compiler-master\\context_free_grammar.txt");
 	std::string str1;
+	std::cout << "1";
 	while ( getline(fin1,str1) )
 	{
 		std::cout << "G: " << str1 << std::endl;
 		g.push_back(str1);
 	}
 	fin1.close();
-
-	std::ifstream fin2("U.txt");
+	std::cout << "2";
+	std::ifstream fin2("D:\\download\\compiler-master\\U.txt");
 	std::string str2;
 	while (getline(fin2, str2))
 	{
@@ -38,8 +40,8 @@ int main(int argc, char ** argv)
 		u.push_back(str2);
 	}
 	fin2.close();
-
-	std::ifstream fin3("T.txt");
+	std::cout << "3";
+	std::ifstream fin3("D:\\download\\compiler-master\\T.txt");
 	std::string str3;
 	while (getline(fin3, str3))
 	{
@@ -48,10 +50,16 @@ int main(int argc, char ** argv)
 	}
 	fin3.close();
 
+	std::cout << "4";
+
 	Yacc y(t, u, "E");
 	y.build_LR1(g);
 	y.print();
 	y.analyze("( i * i * ( i + i ) ) * i");
+
+
+
+
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Fetal: No input file.\n");

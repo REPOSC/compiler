@@ -5,7 +5,7 @@ main
 float
 {
 }
-ε
+@
 ;
 return
 num
