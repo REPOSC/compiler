@@ -52,10 +52,10 @@ int main(int argc, char ** argv)
 
 	std::cout << "4";
 
-	Yacc y(t, u, "E");
+	Yacc y(t, u, "Program");
 	y.build_LR1(g);
 	y.print();
-	y.analyze("( i * i * ( i + i ) ) * i");
+	y.analyze("int main(){}");
 
 
 
