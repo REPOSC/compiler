@@ -10,16 +10,20 @@
 #define Yacc_DEBUG
 
 typedef std::vector<std::string> receivers;
+
 typedef struct {
 	std::string before_word;
 	std::vector<std::string> after_words;
 } grammar;	
+
 typedef std::set<std::string> first_set;	
+
 typedef struct {
 	int grammar_index;
 	int pointer;
 	std::string forward_word;
 } project;
+
 bool operator <(const project & p1, const project & p2){
 	if (p1.grammar_index > p2.grammar_index) return true;
 	else if (p1.grammar_index < p2.grammar_index) return false;
@@ -28,20 +32,24 @@ bool operator <(const project & p1, const project & p2){
 	if (p1.forward_word < p2.forward_word) return true;
 	return false;
 }
+
 bool operator == (const project & p1, const project & p2){
 	return p1.grammar_index == p2.grammar_index && 
 		p1.pointer == p2.pointer &&
 		p1.forward_word == p2.forward_word;
 }
+
 typedef struct {
 	std::vector<project> projects;
 	std::unordered_map<std::string, int> convert_to;
 } statement;
+
 bool operator == (statement & p1, statement & p2) {
 	std::sort(p1.projects.begin(), p1.projects.end());
 	std::sort(p2.projects.begin(), p2.projects.end());
 	return p1.projects == p2.projects;
 }
+
 template <class T>
 std::ostream & operator << (std::ostream & os, const std::vector<T> & arr) {
 	if (arr.size() <= 0) return os;
@@ -51,6 +59,7 @@ std::ostream & operator << (std::ostream & os, const std::vector<T> & arr) {
 	os << arr[arr.size() - 1];
 	return os;
 }
+
 typedef struct { char action; int index; } movement;
 typedef std::unordered_map<std::string, std::vector<movement> > table_item;
 typedef std::vector<std::string> word_seq;
@@ -94,6 +103,7 @@ private:
 		if (temp_word[0]) result.push_back(temp_word);
 		return result;
 	}
+
 	grammar get_grammar(const std::string & grammar_str, int index) {
 		/* Parse grammar from grammar string */
 		grammar result;	
@@ -116,6 +126,8 @@ private:
 		}
 		else throw invalid_2nd_grammar{ index, pointer };
 	}
+
+	//增广文法
 	grammar agm_grammars() {
 		/* Augment to current m_grammars */
 		grammar agm_g;		
@@ -123,6 +135,7 @@ private:
 		m_start_word = agm_g.before_word = "$$$";
 		return agm_g;
 	}
+
 	void get_first(std::string & current_str, first_set & current_first) {
 		/* Get first set of current_str, and insert them into current_first */
 		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), current_str) != m_un_terminators.end()) {
@@ -132,6 +145,7 @@ private:
 		}
 		else current_first.insert(current_str);
 	}
+
 	void complete_stmt(statement & stmt) {
 		/* Complete a statement by deploy projects recursively */
 		for (int i = 0; i < stmt.projects.size(); ++i) {
@@ -166,6 +180,7 @@ private:
 			}
 		}
 	}
+
 	void rr_get_first(const std::string & un_terminator) {
 		/* Get first set of un_terminator, and put it into array m_firsts */
 		bool changed = false;
@@ -194,6 +209,7 @@ private:
 			}
 		}
 	}
+
 	project get_next_proj(const project & proj) {
 		/* Get project of current project with pointer moved forward */
 		project new_proj = proj;
@@ -202,6 +218,7 @@ private:
 		}
 		return new_proj;
 	}
+
 	void stmt_walk(int current_index) {
 		/* Looking for new states that can be reached in one step under the current state, then deploy the new states */
 		typedef struct {
@@ -267,6 +284,7 @@ private:
 			}
 		}			
 	}
+
 	void build_table() {
 		/* Build tate transition table by current m_statements, and store it in m_movement_table */
 		for (auto statement : m_statements) {
@@ -321,13 +339,16 @@ public:
 	Yacc(const std::vector<std::string> & terminators, const std::vector<std::string> & un_terminators,
 		const std::string & start_word) {
 		/* Initialize terminators, un_terminators and start word */
-		for (auto current_word : terminators) m_terminators.insert(current_word);
+		for (auto current_word : terminators) 
+			m_terminators.insert(current_word);
 		m_terminators.insert(eof_str);
-		for (auto current_word : un_terminators) m_un_terminators.insert(current_word);
+		for (auto current_word : un_terminators) 
+			m_un_terminators.insert(current_word);
 		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), start_word) == m_un_terminators.end()) 
 			throw invalid_start_word();
 		else m_start_word = start_word;
 	}
+
 	void build_LR1(const std::vector<std::string> & grammar_str) {
 		/* Build LR1 table by grammars */
 		grammar begin_grammar = agm_grammars();
@@ -364,6 +385,7 @@ public:
 
 		build_table();
 	}
+
 	void clear_LR1() {
 		/* Delete built LR1 table and interim status information */
 		m_signal_table.clear();
@@ -382,6 +404,7 @@ public:
 			}			
 		}
 	}
+
 	void analyze(const std::string & readin_str) {
 		/* Output the process of LR1 derivation */
 		check();
@@ -391,7 +414,7 @@ public:
 		for (int i = 0; i < readin_seq.size(); ++i) {
 			if (std::find(m_un_terminators.begin(), m_un_terminators.end(), readin_seq[i]) == m_un_terminators.end()
 				&& std::find(m_terminators.begin(), m_terminators.end(), readin_seq[i]) == m_terminators.end())
-				throw invalid_input_string({ i });
+				throw invalid_input_string{ i };
 		}
 		std::vector<int> status_stk;
 		std::vector<std::string> word_stk;
