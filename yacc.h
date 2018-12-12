@@ -72,7 +72,7 @@ class Yacc
 {
 private: 
 	const std::string eof_str = "#";
-	const std::string spc_str = "ε";
+	const std::string spc_str = "space";
 	std::set<std::string> m_terminators;
 	std::set<std::string> m_un_terminators;
 	std::string m_start_word;
@@ -117,17 +117,11 @@ private:
 			if (result.before_word.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
 			result.after_words = get_seq_from_str(grammar_str, pointer);
 			if (result.after_words.size() <= 0) throw invalid_2nd_grammar{ index, pointer };
-			for (int i = 0; i < result.after_words.size(); ++i) {
-				if (std::find(m_un_terminators.begin(), m_un_terminators.end(), result.after_words[i]) == m_un_terminators.end()
-					&& std::find(m_terminators.begin(), m_terminators.end(), result.after_words[i]) == m_terminators.end())
-					throw invalid_2nd_grammar{ index, i };
-			}
 			return result;
 		}
 		else throw invalid_2nd_grammar{ index, pointer };
 	}
 
-	//增广文法
 	grammar agm_grammars() {
 		/* Augment to current m_grammars */
 		grammar agm_g;		
@@ -179,6 +173,7 @@ private:
 				}
 			}
 		}
+		fflush(stmt);
 	}
 
 	void rr_get_first(const std::string & un_terminator) {
@@ -262,7 +257,6 @@ private:
 		for (same_set & current_set : sets) {
 			if (current_set.recognize_str != eof_str) {
 				statement new_stmt;
-				std::vector<project> p = m_statements[current_index].projects;
 				for (auto current_project : current_set.projects_set) {
 					project next_project = get_next_proj(current_project);
 					new_stmt.projects.push_back(next_project);
@@ -307,6 +301,16 @@ private:
 			m_movement_table.push_back(current_item);
 		}
 	}
+	
+	void fflush(statement & current_statement){
+		for (project & proj: current_statement.projects){
+			while (proj.pointer < m_grammars[proj.grammar_index].after_words.size() && 
+				m_grammars[proj.grammar_index].after_words[proj.pointer] == spc_str){
+				++ proj.pointer;
+			}
+		}
+	}
+	
 #ifdef Yacc_DEBUG
 	void proj_prt(const project & proj) {
 		/* Print a project */
@@ -336,27 +340,31 @@ private:
 	}
 #endif
 public:
-	Yacc(const std::vector<std::string> & terminators, const std::vector<std::string> & un_terminators,
-		const std::string & start_word) {
+	Yacc(const std::vector<std::string> & grammar_strs, const std::string & start_word) {
 		/* Initialize terminators, un_terminators and start word */
-		for (auto current_word : terminators) 
-			m_terminators.insert(current_word);
-		m_terminators.insert(eof_str);
-		for (auto current_word : un_terminators) 
-			m_un_terminators.insert(current_word);
-		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), start_word) == m_un_terminators.end()) 
-			throw invalid_start_word();
-		else m_start_word = start_word;
-	}
-
-	void build_LR1(const std::vector<std::string> & grammar_str) {
-		/* Build LR1 table by grammars */
+		m_start_word = start_word;
 		grammar begin_grammar = agm_grammars();
 		m_grammars.push_back(begin_grammar);
 
-		for (int i = 0; i < grammar_str.size(); ++i)
-			m_grammars.push_back(get_grammar(grammar_str[i], i));
+		for (int i = 0; i < grammar_strs.size(); ++i){
+			grammar current_grammar = get_grammar(grammar_strs[i], i);
+			m_grammars.push_back(current_grammar);
+			m_un_terminators.insert(current_grammar.before_word);
+		}
+		m_terminators.insert(eof_str);
+		
+		for (auto current_grammar: m_grammars){
+			for (auto current_word: current_grammar.after_words){
+				if (find(m_un_terminators.begin(), m_un_terminators.end(), current_word) == m_un_terminators.end())
+					m_terminators.insert(current_word);
+			}
+		}
+		if (std::find(m_un_terminators.begin(), m_un_terminators.end(), start_word) == m_un_terminators.end()) 
+			throw invalid_start_word();
+	}
 
+	void build_LR1() {
+		/* Build LR1 table by grammars */
 		for (auto word : m_un_terminators) {
 			m_signal_table[word] = receivers();
 		}
@@ -407,8 +415,23 @@ public:
 
 	void analyze(const std::string & readin_str) {
 		/* Output the process of LR1 derivation */
-		check();
+		//check();
 		word_seq readin_seq = get_seq_from_str(readin_str, 0);
+		std::cout << "--------------------------------" << std::endl;
+		std::set < std::string > my_set;
+		for (auto tb_item : m_movement_table) {
+			for (auto str : tb_item) {
+				my_set.insert(str.first);
+			}
+		}
+		for (auto str:my_set) {
+			std::cout << str << std::endl;
+		}
+		std::cout << "--------------------------------" << std::endl;
+		for (auto str : m_movement_table[35]) {
+			std::cout << str.first << ":::::::::::::::::::" << str.second[0].action << str.second[0].index << std::endl;
+		}
+		std::cout << "--------------------------------" << std::endl;
 		if (readin_seq.back() != eof_str)
 			readin_seq.push_back(eof_str);
 		for (int i = 0; i < readin_seq.size(); ++i) {
@@ -441,10 +464,15 @@ public:
 					const grammar & current_grammar = m_grammars[now_movement.index];
 					int check_index = current_grammar.after_words.size();
 					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
-						status_stk.pop_back();
-						std::string current_string = word_stk.back();
-						word_stk.pop_back();
-						if (current_grammar.after_words[check_index - 1] != current_string) throw wrong_table_item({ now_status, now_str });
+						std::string expected_string = current_grammar.after_words[check_index - 1];
+						if (expected_string != spc_str) {							
+							if ( word_stk.back() != expected_string) {
+								std::cout << expected_string << " " << word_stk.back();
+								throw wrong_table_item({ now_status, now_str });
+							}
+							status_stk.pop_back();
+							word_stk.pop_back();
+						}							
 					}
 					if (check_index) throw wrong_table_item({ now_status, now_str });
 					now_str = current_grammar.before_word;
@@ -455,7 +483,8 @@ public:
 						word_stk.push_back(now_str);
 						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
 							now_movement = m_movement_table[now_status][now_str][0];
-							if (now_movement.action != ' ') throw wrong_table_item({ now_status, now_str });
+							if (now_movement.action != ' ') 
+								throw wrong_table_item({ now_status, now_str });
 							else status_stk.push_back(now_movement.index);
 						}
 						else throw wrong_table_item({ now_status, now_str });
@@ -484,6 +513,14 @@ public:
 				std::cout<<j<<" ";
 			}
 			std::cout<<std::endl;
+		}
+		std::cout << "m_terminators" << std::endl;
+		for (auto i : m_terminators) {
+			std::cout << i << std::endl;
+		}
+		std::cout << "m_un_terminators" << std::endl;
+		for (auto i : m_un_terminators) {
+			std::cout << i << std::endl;
 		}
 		std::cout<<"first:"<<std::endl;
 		for (auto i : m_firsts){

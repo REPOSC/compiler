@@ -1,94 +1,33 @@
 #include "lex.h"
 #include "yacc.h"
-#include<fstream>
+#include <fstream>
 
 int main(int argc, char ** argv)
 {
 
-	//freopen("1.csv", "w", stdout);
-	/*
-		std::vector<std::string> t{ "i", "+", "*", "(", ")"};
-		std::vector<std::string> u{ "E", "T", "F" };
-		std::vector<std::string> g{
-			" E-> E + T",
-			" E-> T",
-			"T-> T *   F ",
-			"T-> F    ",
-			"F  -> i ",
-			"F   ->  ( E    )"
-	*/
-
-	//std::vector<std::string> t{};
-	//std::vector<std::string> u{};
-	std::vector<std::string> g{};
-	std::vector<std::string> T{};
-	std::vector<std::string> U{};
-
-	std::ifstream fin1(".\\context_free_grammar.txt");
-	std::string str1;
-	while (getline(fin1, str1))
-	{
-		std::cout << "G: " << str1 << std::endl;
-		g.push_back(str1);
+	freopen("1.csv", "w", stdout);
+	
+	std::string start = "Program";
+	std::ifstream isf("context_free_grammar.txt");
+	std::vector<std::string> grammar_strs;
+	std::string temp_grammar_str;
+	while (getline(isf, temp_grammar_str)){
+		grammar_strs.push_back(temp_grammar_str);
 	}
-	fin1.close();
-	char * temprow = new char[50];
-	char * tempchar = new char[20];
-	std::vector<std::string>::iterator tempit;
-	std::string start;
-	bool first = true;
-	for (std::string i : g) {
-		strcpy(temprow, i.c_str());
-		tempchar = strtok(temprow, " ");
-		if (std::find(U.begin(),U.end(),tempchar) == U.end()) {
-			U.push_back(tempchar);
-			if (first) {
-				start = tempchar;
-				first = false;
-			}
-		}
-		for (tempit = T.begin(); tempit < T.end();tempit ++) {
-			if (*tempit == tempchar) {
-				T.erase(tempit);
-				break;
-			}
-		}
-		tempchar = strtok(NULL, " ");
-		tempchar = strtok(NULL, " ");
-		while (tempchar != NULL) {
-			if (std::find(U.begin(), U.end(), tempchar) == U.end()) {
-				if (std::find(T.begin(), T.end(), tempchar) == T.end()) {
-					T.push_back(tempchar);
-				}
-			}
-			tempchar = strtok(NULL, " ");
-		}
-	}
-	/*std::cout << "2";
-	std::ifstream fin2(".\\U.txt");
-	std::string str2;
-	while (getline(fin2, str2))
-	{
-		std::cout << "U: " << str2 << std::endl;
-		u.push_back(str2);
-	}
-	fin2.close();
-	std::cout << "3";
-	std::ifstream fin3(".\\T.txt");
-	std::string str3;
-	while (getline(fin3, str3))
-	{
-		std::cout << "T: " << str3 << std::endl;
-		t.push_back(str3);
-	}
-	fin3.close();
-
-	std::cout << "4";*/
-
-	Yacc y(T, U, start);
-	y.build_LR1(g);
+	
+	Yacc y(grammar_strs, start);
+	y.build_LR1();
 	y.print();
-	y.analyze("int var ;");
+
+	std::ifstream ifx("1.txt");
+	std::string temp_string;
+	std::string all_string;
+	while (std::getline(ifx, temp_string)) {
+		all_string += (temp_string + ' ');
+	}
+	std::cout << all_string << std::endl;
+
+		y.analyze(all_string);
 
 
 

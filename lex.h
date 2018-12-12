@@ -11,7 +11,6 @@
 #define LEX__32
 
 typedef struct {} File_Error;
-#define Lex__DEBUG
 
 #ifdef Lex__DEBUG
 #define GetFromStream(x) _GetFromStream(x, debug_str)
