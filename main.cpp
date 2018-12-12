@@ -53,6 +53,8 @@ int main(int argc, char ** argv)
 				break;
 			}
 		}
+		tempchar = strtok(NULL, " ");
+		tempchar = strtok(NULL, " ");
 		while (tempchar != NULL) {
 			if (std::find(U.begin(), U.end(), tempchar) == U.end()) {
 				if (std::find(T.begin(), T.end(), tempchar) == T.end()) {
