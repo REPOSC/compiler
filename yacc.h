@@ -417,21 +417,6 @@ public:
 		/* Output the process of LR1 derivation */
 		//check();
 		word_seq readin_seq = get_seq_from_str(readin_str, 0);
-		std::cout << "--------------------------------" << std::endl;
-		std::set < std::string > my_set;
-		for (auto tb_item : m_movement_table) {
-			for (auto str : tb_item) {
-				my_set.insert(str.first);
-			}
-		}
-		for (auto str:my_set) {
-			std::cout << str << std::endl;
-		}
-		std::cout << "--------------------------------" << std::endl;
-		for (auto str : m_movement_table[35]) {
-			std::cout << str.first << ":::::::::::::::::::" << str.second[0].action << str.second[0].index << std::endl;
-		}
-		std::cout << "--------------------------------" << std::endl;
 		if (readin_seq.back() != eof_str)
 			readin_seq.push_back(eof_str);
 		for (int i = 0; i < readin_seq.size(); ++i) {
@@ -467,7 +452,6 @@ public:
 						std::string expected_string = current_grammar.after_words[check_index - 1];
 						if (expected_string != spc_str) {							
 							if ( word_stk.back() != expected_string) {
-								std::cout << expected_string << " " << word_stk.back();
 								throw wrong_table_item({ now_status, now_str });
 							}
 							status_stk.pop_back();

@@ -1,4 +1,4 @@
-Program -> int main ( ) Block
+Program -> void main ( ) Block
 Type -> int
 Type -> float
 Block -> { Stmts }
@@ -6,7 +6,7 @@ Block -> Stmt
 Stmts -> { Stmts }
 Stmts -> Stmt Stmts
 Stmts -> Stmt
-Stmts -> ε
+Stmts -> space
 Stmt -> Expr ;
 Stmt -> ;
 Stmt -> return num ;
@@ -14,26 +14,23 @@ Stmt -> break ;
 Stmt -> scanf ( SStmt )
 SStmt -> var SVar
 SVar -> , var SVar
-SVar -> ε
+SVar -> space
 Stmt -> printf ( PStmt )
 PStmt -> var PVar
 PStmt -> num PVar
 PVar -> , var PVar
 PVar -> , num PVar
-PVar -> ε
+PVar -> space
 Stmt -> if ( Expr ) Stmts
 Stmt -> if ( Expr ) Stmts else Stmts
 Stmt -> while ( Expr ) Stmts
 Stmt -> do Stmts while ( Expr )
 Stmt -> for ( Expr ; Expr ; Expr ) Stmts
-Stmt -> switch ( Expr ) { Cases }
-Cases -> case num : Stmts Cases
-Cases -> ε
 Stmt -> Assign
-Assign -> Type Vars MVars;
+Assign -> Type Vars MVars ;
 Vars -> var
 Vars -> var = Expr
-MVars -> ε
+MVars -> space
 MVars -> , Vars MVars
 OpMath1 -> *
 OpMath1 -> /
@@ -56,6 +53,7 @@ OpJudge2 -> ==
 OpJudge2 -> !=
 Expr -> var 
 Expr -> Expr10 
+Expr1 -> var
 Expr1 -> ( Expr )
 Expr2 -> Expr1
 Expr2 -> var OpSelf
