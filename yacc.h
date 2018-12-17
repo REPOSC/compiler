@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct Node000 {
 	int index;
-	Token000 token;
+	Token000 *token;
 	char * syn;
 	char * inh;
 	std::vector<int> children;
@@ -29,20 +29,20 @@ bool operator ==(Node000 &a, Node000 &b) {
 }
 
 typedef struct {
-	Token000 token;
+	Token000 *token;
 	int index;
 }OneWord;
 
-typedef std::vector<Token000> TOKEN_SET000;
+typedef std::vector<Token000 *> TOKEN_SET000;
 typedef std::vector<Node000 *> NODE_SET000;
 
-std::string get_string_tk(Token000 tk) {
-	if (tk.type == 0)
+std::string get_string_tk(Token000 * tk) {
+	if (tk->type == 0)
 		return "var";
-	else if (tk.type == 1 || tk.type == 2)
+	else if (tk->type == 1 || tk->type == 2)
 		return "num";
 	else
-		return tk.value;
+		return tk->value;
 }
 
 
@@ -532,8 +532,14 @@ public:
 		int root;
 		status_stk.push_back(0);
 		bool finished = false;
+		if (token_set.back()->value != eof_str) {
+			char *eof = new char[5];
+			strcpy(eof, eof_str.c_str());
+			token_set.push_back(new Token000{ 10,eof });
+		}
 		while (!finished) {
-			Token000 nowtoken = token_set[pointer];
+			Token000 *nowtoken;
+			nowtoken = token_set[pointer];
 			now_status = status_stk.back();
 			now_str = get_string_tk(nowtoken);
 			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
@@ -545,7 +551,7 @@ public:
 				switch (now_movement.action) {
 				case 's':
 					status_stk.push_back(now_movement.index);
-					word_stk.push_back(OneWord{ nowtoken,-1 });
+					word_stk.push_back(OneWord{ nowtoken, -1 });
 					++pointer;
 					break;
 				case 'r':
@@ -555,55 +561,60 @@ public:
 					bool flagone = false;//判断是不是操作符
 					bool flagtwo = false;//判断是不是操作符的孩子
 					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
-						Node000 *new_node = new Node000;
-						if (word_stk.back().index == -1) {
-							new_node->index = node_set.size();
-							new_node->token = word_stk.back().token;
-							if (new_node->token.type == OPERATOR) {
-								char * temp_value = new_node->token.value;
-								if (temp_value == "*" || temp_value == "/" || temp_value == "+" || temp_value == "*"
-									|| temp_value == "^" || temp_value == "%" || temp_value == ">" || temp_value == "<"
-									|| temp_value == ">=" || temp_value == "<=" || temp_value == "==" || temp_value == "!=") {
-									if (check_index == 1) {
-										throw invalid_input_string{ 0 };
-									}
-									else {
-										std::vector<int> temp_child;
-										temp_child.push_back(new_node->index - 1);
-										temp_child.push_back(new_node->index + 1);
-										new_child.pop_back();
-										new_node->children = temp_child;
-										flagone = true;
+						std::string expected_string = current_grammar.after_words[check_index - 1];
+						if (expected_string != spc_str) {
+							if (get_string_tk(word_stk.back().token) != expected_string) {
+								throw wrong_table_item({ now_status, now_str });
+							}
+							Node000 *new_node = new Node000;
+							if (word_stk.back().index == -1) {
+								new_node->index = node_set.size();
+								new_node->token = word_stk.back().token;
+								if (new_node->token->type == OPERATOR) {
+									char * temp_value = new_node->token->value;
+									if (temp_value == "*" || temp_value == "/" || temp_value == "+" || temp_value == "*"
+										|| temp_value == "^" || temp_value == "%" || temp_value == ">" || temp_value == "<"
+										|| temp_value == ">=" || temp_value == "<=" || temp_value == "==" || temp_value == "!=") {
+										if (check_index == 1) {
+											throw invalid_input_string{ 0 };
+										}
+										else {
+											std::vector<int> temp_child;
+											temp_child.push_back(new_node->index - 1);
+											temp_child.push_back(new_node->index + 1);
+											new_child.pop_back();
+											new_node->children = temp_child;
+											flagone = true;
+										}
 									}
 								}
+								node_set.push_back(new_node);
 							}
-							node_set.push_back(new_node);
-						}
-						else {
-							new_node = node_set[word_stk.back().index];
-						}
-						std::cout << new_node->token.value << std::endl;
-						if (!flagtwo) {
+							else {
+								new_node = node_set[word_stk.back().index];
+							}
 							new_child.push_back(new_node->index);
+							if (!flagtwo) {
+								new_child.push_back(new_node->index);
+							}
+							else {
+								flagtwo = false;
+							}
+							if (flagone) {
+								flagtwo = true;
+								flagone = false;
+							}
+							status_stk.pop_back();
+							std::string current_string = word_stk.back().token->value;
+							word_stk.pop_back();
 						}
-						else {
-							flagtwo = false;
-						}
-						if (flagone) {
-							flagtwo = true;
-							flagone = false;
-						}
-						status_stk.pop_back();
-						std::string current_string = word_stk.back().token.value;
-						word_stk.pop_back();
-						if (current_grammar.after_words[check_index - 1] != current_string) throw wrong_table_item({ now_status, now_str });
 					}
 					if (check_index) throw wrong_table_item({ now_status, now_str });
 					now_str = current_grammar.before_word;
 					now_status = status_stk.back();
 					char * temp_str = new char[50];
 					strcpy(temp_str, now_str.c_str());
-					Token000 temptoken{ UNTERMINAL, temp_str };
+					Token000 *temptoken = new Token000{ UNTERMINAL,temp_str };	
 					Node000 *new_node = new Node000;
 					new_node->index = node_set.size();
 					new_node->token = temptoken;
@@ -614,7 +625,7 @@ public:
 						finished = true;
 					}
 					else {
-						word_stk.push_back(OneWord{ temptoken, new_node->index });
+						word_stk.push_back(OneWord{ new_node->token, new_node->index });
 						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
 							now_movement = m_movement_table[now_status][now_str][0];
 							if (now_movement.action != ' ') throw wrong_table_item({ now_status, now_str });
@@ -629,11 +640,11 @@ public:
 				throw wrong_table_item({ now_status, now_str });
 		}
 
-#ifdef Yaacc_DEBUG
+#ifdef Yacc_DEBUG
 		for (int i = 0; i < node_set.size();i++) {
-			std::cout << i << " : ";
-			char * temp_value = node_set[i]->token.value;
-			switch (node_set[i]->token.type) {
+			std::cout << std::left<<std::setw(2)<< i << " : ";
+			char * temp_value = node_set[i]->token->value;
+			switch (node_set[i]->token->type) {
 			case VARNAME:
 				std::cout << std::setw(25) << "ID Declaration" << "symbol:" << std::setw(8)<< temp_value << "Children: ";
 				break;

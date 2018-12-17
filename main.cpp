@@ -27,17 +27,17 @@ int main(int argc, char ** argv)
 	}
 	std::cout << all_string << std::endl;
 
-	Token000 one = { TYPENAME,"void" };
-	Token000 two = { TYPENAME,"main" };
-	Token000 three = { DELIMITER,"(" };
-	Token000 four = { DELIMITER,")" };
-	Token000 five = { DELIMITER,"{" };
-	Token000 six = { TYPENAME,"int" };
-	Token000 seven = { VARNAME,"a" };
-	Token000 eight = { OPERATOR,"=" };
-	Token000 nine = { INT_NUM,"3" };
-	Token000 ten = { DELIMITER,";" };
-	Token000 ele = { DELIMITER,"}" };
+	Token000 *one = new Token000{ TYPENAME,"void" };
+	Token000 *two = new Token000{ TYPENAME,"main" };
+	Token000 *three = new Token000{ DELIMITER,"(" };
+	Token000 *four = new Token000{ DELIMITER,")" };
+	Token000 *five = new Token000{ DELIMITER,"{" };
+	Token000 *six = new Token000{ TYPENAME,"int" };
+	Token000 *seven = new Token000{ VARNAME,"a" };
+	Token000 *eight = new Token000{ OPERATOR,"=" };
+	Token000 *nine = new Token000{ INT_NUM,"3" };
+	Token000 *ten = new Token000{ DELIMITER,";" };
+	Token000 *ele = new Token000{ DELIMITER,"}" };
 	TOKEN_SET000 test;
 	test.push_back(one);
 	test.push_back(two);
