@@ -27,8 +27,31 @@ int main(int argc, char ** argv)
 	}
 	std::cout << all_string << std::endl;
 
-		y.analyze(all_string);
-
+	Token000 one = { TYPENAME,"void" };
+	Token000 two = { TYPENAME,"main" };
+	Token000 three = { DELIMITER,"(" };
+	Token000 four = { DELIMITER,")" };
+	Token000 five = { DELIMITER,"{" };
+	Token000 six = { TYPENAME,"int" };
+	Token000 seven = { VARNAME,"a" };
+	Token000 eight = { OPERATOR,"=" };
+	Token000 nine = { INT_NUM,"3" };
+	Token000 ten = { DELIMITER,";" };
+	Token000 ele = { DELIMITER,"}" };
+	TOKEN_SET000 test;
+	test.push_back(one);
+	test.push_back(two);
+	test.push_back(three);
+	test.push_back(four);
+	test.push_back(five);
+	test.push_back(six);
+	test.push_back(seven);
+	test.push_back(eight);
+	test.push_back(nine);
+	test.push_back(ten);
+	test.push_back(ele);
+	//y.analyze(all_string);
+	y.analyze000(test);
 
 
 	if (argc <= 1)
