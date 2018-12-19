@@ -1,9 +1,7 @@
 #include "type.h"
-#include "InputStream.h"
+#include <fstream>
 #include "judgement.h"
 #include "base.h"
-#include "debug.h"
-#include <unordered_map>
 #include <string>
 #include <cstring>
 #include <cmath>
@@ -13,7 +11,6 @@
 typedef struct {} File_Error;
 
 #ifdef Lex__DEBUG
-#define GetFromStream(x) _GetFromStream(x, debug_str)
 #define Symbol() Print_Symbol()
 #define Symbol_Token() Print_Symbol_Token()
 #else
@@ -41,11 +38,11 @@ class Lex
 		}
 		void Print_Symbol()
 		{
-			//if (debug_str == "\n") printf("读取到换行符，忽略\n");
-			//else if (debug_str == "\r") printf("读取到回车符号，忽略\n");
-			//else if (debug_str == " ") printf("读取到空格，忽略\n");
-			//else if (debug_str == "\t") printf("读取到制表符，忽略\n");
-			//else printf("【%s】，忽略\n", debug_str.c_str());
+			if (debug_str == "\n") printf("读取到换行符，忽略\n");
+			else if (debug_str == "\r") printf("读取到回车符号，忽略\n");
+			else if (debug_str == " ") printf("读取到空格，忽略\n");
+			else if (debug_str == "\t") printf("读取到制表符，忽略\n");
+			else printf("【%s】，忽略\n", debug_str.c_str());
 			debug_str = "";
 		}
 #else
@@ -62,20 +59,20 @@ class Lex
 	const static token NAME_[];
 	const static char ID1_[], ID2_[], ID3_[], ID4_[];
 	const static Node NAME1_[], NAME2_[], NAME3_[], NAME4_[];
-	
+
 private:
 	std::unordered_map<std::string, token> GR_;
 	std::unordered_map<char, Node> GR1_, GR2_, GR3_, GR4_;
-	InputStream m_inputstream;
+	std::ifstream m_inputstream;
 	double get_next_int(int radix = 10, bool after_dot = false)
 	{
-		char x = PeekFromStream(&m_inputstream);
+		char x = m_inputstream.peek();
 		double result = (x - '0');
 		int counter = 1;
 		while (true)
 		{
-			GetFromStream(&m_inputstream);
-			x = PeekFromStream(&m_inputstream);
+			m_inputstream.get();
+			x = m_inputstream.peek();
 			if (check_if_number(x))
 			{
 				result *= radix;
@@ -94,7 +91,7 @@ private:
 	token read_after_dot()	//获取点号后面的小数（不包含点号），如果点号后面没有数字，则返回ERR_TOKEN
 	{
 		token result;
-		char x_ = PeekFromStream(&m_inputstream);
+		char x_ = m_inputstream.peek();
 		if (check_if_number(x_))
 		{
 			result.type = REAL_NUM;
@@ -110,11 +107,11 @@ private:
 	{
 		token result;
 		result.type = REAL_NUM;
-		char x_ = PeekFromStream(&m_inputstream);
+		char x_ = m_inputstream.peek();
 		if (x_ == '+')
 		{
-			GetFromStream(&m_inputstream);
-			char x__ = PeekFromStream(&m_inputstream);
+			m_inputstream.get();
+			char x__ = m_inputstream.peek();
 			if (check_if_number(x__))
 				result.value.real_value = get_next_int();
 			else
@@ -124,8 +121,8 @@ private:
 		}
 		else if (x_ == '-')
 		{
-			GetFromStream(&m_inputstream);
-			char x__ = PeekFromStream(&m_inputstream);
+			m_inputstream.get();
+			char x__ = m_inputstream.peek();
 			if (check_if_number(x__))
 				result.value.real_value = - get_next_int();
 			else
@@ -146,8 +143,8 @@ private:
 	token get_keyword()
 	{
 		std::string s;
-		while (check_if_led(PeekFromStream(&m_inputstream)))
-			s += GetFromStream(&m_inputstream);
+		while (check_if_led(m_inputstream.peek()))
+			s += m_inputstream.get();
 		if (GR_.find(s) != GR_.end())
 			return GR_[s];
 		else if (s == "main")
@@ -158,69 +155,63 @@ private:
 		}
 		else
 		{
-			token result_;
-			result_.type = VARNAME;
-			result_.value.var_name = new char[strlen(s.c_str()) + 1];
-			strcpy(result_.value.var_name, s.c_str());
+			token result_ = create_str_token(VARNAME, s.c_str());
 			return result_;
 		}
 	}
 	token get_symbol()
 	{
-		char x = GetFromStream(&m_inputstream);
+		char x = m_inputstream.get();
 		if (x == '\"' || x == '\'')
-		{			
+		{
 			std::string s = "\"";
-			char x_ = GetFromStream(&m_inputstream);
+			char x_ = m_inputstream.get();
 			while (x_ != s[0] && x_ > 0)
 			{
 				s += x_;
-				x_ = GetFromStream(&m_inputstream);
+				x_ = m_inputstream.get();
 			}
-			token result;
 			s += x;
-			result.type = STRING;
-			result.value.str_name = new char[strlen(s.c_str()) + 1];
-			strcpy(result.value.str_name, s.c_str());
-			return result;		
+			token result = create_str_token(STRING, s.c_str());
+			return result;
 		}
 		else if (x == '/')
 		{
-			char x_ = PeekFromStream(&m_inputstream);
+			char x_ = m_inputstream.peek();
 			if (x_ == '*')
 			{
-				GetFromStream(&m_inputstream);
-				x_ = PeekFromStream(&m_inputstream);
+				m_inputstream.get();
+				x_ = m_inputstream.peek();
 				if (x_ < 0)
-					return EOF_TOKEN;
+					return EOFLINE_TOKEN;
 				else
-					GetFromStream(&m_inputstream);
-				char x__ = PeekFromStream(&m_inputstream);
+					m_inputstream.get();
+				char x__ = m_inputstream.peek();
 				while ((x_ != '*' || x__ != '/') && x__ > 0)
 				{
 					x_ = x__;
-					GetFromStream(&m_inputstream);
-					x__ = PeekFromStream(&m_inputstream);
+					m_inputstream.get();
+					x__ = m_inputstream.peek();
 				}
 				if (x__ > 0)
-					GetFromStream(&m_inputstream);
+					m_inputstream.get();
 				Symbol();
 				return get_token();
 			}
 		}
 		else if (x == '.')
 		{
-			char x_ = PeekFromStream(&m_inputstream);
+			char x_ = m_inputstream.peek();
 			if (check_if_number(x_))
 			{
 				token result2_ = read_after_dot();
 				token result3_, result;
-				x = PeekFromStream(&m_inputstream);
+				x = m_inputstream.peek();
 				if (x == 'e' || x == 'E')
 				{
-					GetFromStream(&m_inputstream);
+					m_inputstream.get();
 					result3_ = read_after_e();
-				}			
+				}
 				else
 				{
 					result3_.type = INT_NUM;
@@ -241,64 +232,64 @@ private:
 		if (GR1_.find(x) != GR1_.end())
 		{
 			return GR1_[x].result_;
-		}			
+		}
 		else if (GR2_.find(x) != GR2_.end())
 		{
-			char x_ = PeekFromStream(&m_inputstream);
+			char x_ = m_inputstream.peek();
 			if (x_ == '=')
 			{
-				GetFromStream(&m_inputstream);
+				m_inputstream.get();
 				return GR2_[x].next->result_;
 			}
 			else
 			{
 				return GR2_[x].result_;
-			}				
+			}
 		}
 		else if (GR3_.find(x) != GR3_.end())
 		{
-			char x_ = PeekFromStream(&m_inputstream);
+			char x_ = m_inputstream.peek();
 			if (x == x_)
 			{
-				GetFromStream(&m_inputstream);
+				m_inputstream.get();
 				return GR3_[x].next->next->result_;
 			}
 			else if (x_ == '=')
 			{
-				GetFromStream(&m_inputstream);
+				m_inputstream.get();
 				return GR3_[x].next->result_;
 			}
 			else
 			{
 				return GR3_[x].result_;
-			}				
+			}
 		}
 		else if (GR4_.find(x) != GR4_.end())
 		{
-			char x_ = PeekFromStream(&m_inputstream);
+			char x_ = m_inputstream.peek();
 			if (x == x_)
 			{
-				GetFromStream(&m_inputstream);
-				char x__ = PeekFromStream(&m_inputstream);
+				m_inputstream.get();
+				char x__ = m_inputstream.peek();
 				if (x__ == '=')
 				{
-					GetFromStream(&m_inputstream);
+					m_inputstream.get();
 					return GR4_[x].next->next->next->result_;
 				}
 				else
 				{
 					return GR4_[x].next->next->result_;
-				}					
+				}
 			}
 			else if (x_ == '=')
 			{
-				GetFromStream(&m_inputstream);
+				m_inputstream.get();
 				return GR4_[x].next->result_;
 			}
 			else
 			{
 				return GR4_[x].result_;
-			}				
+			}
 		}
 		else
 			return ERR_TOKEN;
@@ -307,19 +298,19 @@ private:
 	{
 		token result;
 		token result1_, result2_, result3_;
-		char x = PeekFromStream(&m_inputstream);
+		char x = m_inputstream.peek();
 		if (x == '0')
 		{
-			GetFromStream(&m_inputstream);
-			x = PeekFromStream(&m_inputstream);
-			if (x == 'x' || x == 'X') 
+			m_inputstream.get();
+			x = m_inputstream.peek();
+			if (x == 'x' || x == 'X')
 			{
 				result.type = INT_NUM;
 				result.value.int_value = 0;
 				while (true)
 				{
-					GetFromStream(&m_inputstream);
-					x = PeekFromStream(&m_inputstream);
+					m_inputstream.get();
+					x = m_inputstream.peek();
 					if (check_if_number(x))
 					{
 						result.value.int_value *= 16;
@@ -338,7 +329,7 @@ private:
 					else
 					{
 						return result;
-					}						
+					}
 				}
 			}
 			else if (check_if_number(x))
@@ -359,10 +350,10 @@ private:
 			result1_.value.real_value = get_next_int();
 		}
 
-		x = PeekFromStream(&m_inputstream);
+		x = m_inputstream.peek();
 		if (x == '.')
 		{
-			GetFromStream(&m_inputstream);
+			m_inputstream.get();
 			result2_ = read_after_dot();
 		}
 		else
@@ -371,12 +362,12 @@ private:
 			result2_.value.real_value = 0;
 		}
 
-		x = PeekFromStream(&m_inputstream);
+		x = m_inputstream.peek();
 		if (x == 'e' || x == 'E')
 		{
-			GetFromStream(&m_inputstream);
+			m_inputstream.get();
 			result3_ = read_after_e();
-		}			
+		}
 		else
 		{
 			result3_.type = INT_NUM;
@@ -404,7 +395,7 @@ private:
 		}
 		return result;
 	}
-	
+
 	void init()
 	{
 		for (auto i = 0; ID_[i][0]; ++i) GR_[ID_[i]] = NAME_[i];
@@ -414,23 +405,22 @@ private:
 		for (auto i = 0; ID4_[i]; ++i) GR4_[ID4_[i]] = NAME4_[i];
 	}
 public:
-	Lex(const char * filename)
+	Lex(const char * filename): m_inputstream(filename)
 	{
-		init();
-		m_inputstream = CreateStream(filename);
-		if (m_inputstream.file == NULL){
+		if (!m_inputstream){
 			throw File_Error();
 		}
+		init();
 	}
 	token get_token()
 	{
-		while (check_if_blank(PeekFromStream(&m_inputstream))){
-			GetFromStream(&m_inputstream);
+		while (check_if_blank(m_inputstream.peek())){
+			m_inputstream.get();
 			Symbol();
 		}
-		char peek_char = PeekFromStream(&m_inputstream);
+		char peek_char = m_inputstream.peek();
 		if (peek_char <= 0)
-			return EOF_TOKEN;
+			return EOFLINE_TOKEN;
 		else if (check_if_leu(peek_char))
 			return Lex::get_keyword();
 		else if (check_if_number(peek_char))
@@ -438,11 +428,115 @@ public:
 		else
 			return Lex::get_symbol();
 	}
+	word_seq get_seq_from_str(const std::string & str, int begin_index)
+	{
+		std::string temp_word;
+		word_seq result;
+		while (is_sep(str[begin_index])) ++begin_index;
+		while (true) {
+			if (is_sep(str[begin_index]) || is_end(str[begin_index])) {
+				token temp_token;
+				if (temp_word == var_str){
+					temp_token.type = ABSTRACT_VAR;
+				}
+				else if (temp_word == num_str){
+					temp_token.type = ABSTRACT_NUM;
+				}
+				else if (temp_word == spc_str){
+                    temp_token = SPC_TOKEN;
+				}
+				else if (temp_word == eof_line_str){
+                    temp_token = EOFLINE_TOKEN;
+				}
+				else if (GR_.find(temp_word) != GR_.end()){
+					temp_token = GR_[temp_word];
+				}
+				else if (temp_word.size() == 1){
+					if (GR1_.find(temp_word[0]) != GR1_.end()){
+						temp_token = GR1_[temp_word[0]].result_;
+					}
+					else if (GR2_.find(temp_word[0]) != GR2_.end()){
+						temp_token = GR2_[temp_word[0]].result_;
+					}
+					else if (GR3_.find(temp_word[0]) != GR3_.end()){
+						temp_token = GR3_[temp_word[0]].result_;
+					}
+					else if (GR4_.find(temp_word[0]) != GR4_.end()){
+						temp_token = GR4_[temp_word[0]].result_;
+					}
+				}
+				else if (temp_word.size() == 2){
+					if (GR2_.find(temp_word[0]) != GR2_.end()
+						&& temp_word[1] == '='){
+						temp_token = GR2_[temp_word[0]].next->result_;
+					}
+					else if (GR3_.find(temp_word[0]) != GR3_.end()
+						&& temp_word[1] == '='){
+						temp_token = GR3_[temp_word[0]].next->result_;
+					}
+					else if (GR3_.find(temp_word[0]) != GR3_.end()
+						&& temp_word[0] == temp_word[1]){
+						temp_token = GR3_[temp_word[0]].next->next->result_;
+					}
+					else if (GR4_.find(temp_word[0]) != GR4_.end()
+						&& temp_word[1] == '='){
+						temp_token = GR4_[temp_word[0]].next->result_;
+					}
+					else if (GR4_.find(temp_word[0]) != GR4_.end()
+						&& temp_word[0] == temp_word[1]){
+						temp_token = GR4_[temp_word[0]].next->next->result_;
+					}
+				}
+				else if (temp_word.size() == 3){
+					if (GR4_.find(temp_word[0]) != GR4_.end()
+						&& temp_word[0] == temp_word[1]
+						&& temp_word[2] == '='){
+						temp_token = GR4_[temp_word[0]].next->next->next->result_;
+					}
+				}
+				else{
+                    temp_token = create_str_token(UNTERMINATOR, temp_word.c_str());
+				}
+				if (temp_word.size() > 0) result.push_back(temp_token);
+				if (is_end(str[begin_index])) break;
+				++begin_index;
+				temp_word = "";
+				while (is_sep(str[begin_index])) ++begin_index;
+			}
+			else temp_word += str[begin_index++];
+		}
+		return result;
+	}
+	grammar get_grammar()
+	{
+		static unsigned index = 1;
+		std::string grammar_text;
+		std::getline(m_inputstream, grammar_text);
+		if (!m_inputstream)
+			return EOF_GRAMMAR;
+		else{
+			grammar result;
+			int pointer = 0;
+			while (is_sep(grammar_text[pointer])) ++pointer;
+			int before_arrow = grammar_text.find("->");
+			if (before_arrow != std::string::npos){
+				std::string temp_before_word;
+				while (pointer != before_arrow && !is_sep(grammar_text[pointer])) temp_before_word += grammar_text[pointer++];
+				while (pointer < before_arrow) ++pointer;
+				pointer += sizeof("->") / sizeof(char);
+                result.before_word = create_str_token(UNTERMINATOR, temp_before_word.c_str());
+				result.after_words = get_seq_from_str(grammar_text, pointer);
+				return result;
+			}
+		}
+		++index;
+	}
 };
 const std::string Lex::ID_[] = {
 	"char",	"double", "float", "int", "short", "void",
-	"case",	"break", "continue", "const", "do", "else", "for", "goto", "if", "return", "switch", "while",
-	""
+	"case",	"break", "continue", "const", "do", "else",
+	"for", "goto", "if", "return", "switch", "while",
+	print_str, input_str, "main", ""
 };
 const token Lex::NAME_[] = {
 	token{TYPENAME, Type_CHAR},
@@ -462,7 +556,10 @@ const token Lex::NAME_[] = {
 	token{CONTROLLER, Controller_IF},
 	token{CONTROLLER, Controller_RETURN},
 	token{CONTROLLER, Controller_SWITCH},
-	token{CONTROLLER, Controller_WHILE}
+	token{CONTROLLER, Controller_WHILE},
+	token{CONTROLLER, Controller_PRINT},
+	token{CONTROLLER, Controller_INPUT},
+	token{CONTROLLER, Controller_MAIN},
 };
 const char Lex::ID1_[] = "()[]~?:{},;";
 const Lex::Node Lex::NAME1_[] = {
@@ -480,7 +577,7 @@ const Lex::Node Lex::NAME1_[] = {
 };
 const char Lex::ID2_[] = "*/%!=";
 const Lex::Node Lex::NAME2_[] = {
-	{token{OPERATOR, Operator_MULTIPLE}, 
+	{token{OPERATOR, Operator_MULTIPLE},
 		new Node({token{OPERATOR, Operator_MULTIPLE_ASSIGNMENT}, nullptr})},
 	{token{OPERATOR, Operator_DIVISION},
 		new Node({token{OPERATOR, Operator_DIVISION_ASSIGNMENT}, nullptr})},
@@ -510,7 +607,7 @@ const char Lex::ID4_[] = "<>";
 const Lex::Node Lex::NAME4_[] = {
 	{token{OPERATOR, Operator_GREATER},
 		new Node({token{OPERATOR, Operator_GREATER_OR_EQUAL},
-			new Node({token{OPERATOR, Operator_RIGHT_SHIFT}, 
+			new Node({token{OPERATOR, Operator_RIGHT_SHIFT},
 				new Node({token{OPERATOR, Operator_RIGHT_SHIFT_ASSIGNMENT}, nullptr})})})},
 	{token{OPERATOR, Operator_LESS},
 		new Node({token{OPERATOR, Operator_LESS_OR_EQUAL},

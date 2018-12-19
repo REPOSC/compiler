@@ -16,15 +16,19 @@ Types are:
 #define TYPE__32
 
 /* Here are Root Types */
-#define VARNAME 0 /* variables */
-#define INT_NUM 1 /* integer numbers */
-#define REAL_NUM 2 /* float numbers */
-#define STRING 3 /* string */
-#define TYPENAME 4
-#define OPERATOR 5
-#define CONTROLLER 6
-#define DELIMITER 7
-#define MAIN 8
+#define TERMINATOR 0
+#define VARNAME 1 /* variables */
+#define INT_NUM 2 /* integer numbers */
+#define REAL_NUM 3 /* float numbers */
+#define STRING 4 /* string */
+#define TYPENAME 5
+#define OPERATOR 6
+#define CONTROLLER 7
+#define DELIMITER 8
+#define MAIN 9
+#define UNTERMINATOR 10 /* unterminators */
+#define ABSTRACT_NUM 11
+#define ABSTRACT_VAR 12
 
 #define EOF_TYPE 0xff
 #define ERR_TYPE 0xfe
@@ -98,6 +102,9 @@ Types are:
 #define Controller_RETURN 9
 #define Controller_SWITCH 10
 #define Controller_WHILE 11
+#define Controller_PRINT 12
+#define Controller_INPUT 13
+#define Controller_MAIN 14
 
 
 /* Here are Delimiters */

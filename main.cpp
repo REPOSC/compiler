@@ -1,12 +1,14 @@
 #include "lex.h"
-#include "yacc.h"
 #include <fstream>
+#include <iostream>
+#include "yacc.h"
 
 int main(int argc, char ** argv)
 {
-
+    freopen("1.csv", "w", stdout);
+	/*
 	freopen("1.csv", "w", stdout);
-	
+
 	std::string start = "Program";
 	std::ifstream isf("context_free_grammar.txt");
 	std::vector<std::string> grammar_strs;
@@ -14,7 +16,7 @@ int main(int argc, char ** argv)
 	while (getline(isf, temp_grammar_str)){
 		grammar_strs.push_back(temp_grammar_str);
 	}
-	
+
 	Yacc y(grammar_strs, start);
 	y.build_LR1();
 	y.print();
@@ -26,34 +28,8 @@ int main(int argc, char ** argv)
 		all_string += (temp_string + ' ');
 	}
 	std::cout << all_string << std::endl;
-
-	Token000 *one = new Token000{ TYPENAME,"void" };
-	Token000 *two = new Token000{ TYPENAME,"main" };
-	Token000 *three = new Token000{ DELIMITER,"(" };
-	Token000 *four = new Token000{ DELIMITER,")" };
-	Token000 *five = new Token000{ DELIMITER,"{" };
-	Token000 *six = new Token000{ TYPENAME,"int" };
-	Token000 *seven = new Token000{ VARNAME,"a" };
-	Token000 *eight = new Token000{ OPERATOR,"=" };
-	Token000 *nine = new Token000{ INT_NUM,"3" };
-	Token000 *ten = new Token000{ DELIMITER,";" };
-	Token000 *ele = new Token000{ DELIMITER,"}" };
-	TOKEN_SET000 test;
-	test.push_back(one);
-	test.push_back(two);
-	test.push_back(three);
-	test.push_back(four);
-	test.push_back(five);
-	test.push_back(six);
-	test.push_back(seven);
-	test.push_back(eight);
-	test.push_back(nine);
-	test.push_back(ten);
-	test.push_back(ele);
-	//y.analyze(all_string);
-	y.analyze000(test);
-
-
+	y.analyze(all_string);
+	*/
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Fetal: No input file.\n");
@@ -66,7 +42,31 @@ int main(int argc, char ** argv)
 	}
 	try
 	{
-		Lex lex(argv[1]);
+		Lex grammar_lex("context_free_grammar.txt");
+		std::vector<grammar> grammars;
+		while (true){
+			grammar gm = grammar_lex.get_grammar();
+			if (gm == EOF_GRAMMAR)
+				break;
+			grammars.push_back(gm);
+		}
+		token start_word = grammars[0].before_word;
+
+		Yacc yacc(grammars, start_word);
+		yacc.build_LR1();
+		yacc.print();
+
+		Lex program_lex(argv[1]);
+		std::vector<token> tokens;
+		while (true){
+            token temp_token = program_lex.get_token();
+            tokens.push_back(temp_token);
+            if (temp_token == EOFLINE_TOKEN) {
+                break;
+            }
+		}
+		yacc.analyze(tokens);
+		/*
 		token tk = ERR_TOKEN;
 		TOKEN_SET one_token_set;
 		SYMBOL_TABLE one_symbol_table;
@@ -133,6 +133,7 @@ int main(int argc, char ** argv)
 			}
 		}
 		system("pause");
+		*/
 		return 0;
 	}
 	catch (File_Error)

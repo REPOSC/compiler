@@ -11,25 +11,25 @@ Stmt -> Expr ;
 Stmt -> ;
 Stmt -> return ;
 Stmt -> break ;
-Stmt -> scanf ( SStmt )
+Stmt -> ScanfStmt ;
+ScanfStmt -> scanf ( SStmt )
 SStmt -> var SVar
 SVar -> , var SVar
 SVar -> space
-Stmt -> printf ( PStmt )
+Stmt -> PrintfStmt ;
+PrintfStmt -> printf ( PStmt )
 PStmt -> var PVar
 PStmt -> num PVar
 PVar -> , var PVar
 PVar -> , num PVar
 PVar -> space
 Stmt -> IfStmt
-IfStmt -> if ( Expr ) Stmts
-IfStmt -> if ( Expr ) Stmts else Stmts
+IfStmt -> if ( Expr ) Block
+IfStmt -> if ( Expr ) Block else Block
 Stmt -> WhileStmt
-WhileStmt -> while ( Expr ) Stmts
-Stmt -> DoStmt
-DoStmt -> do Stmts while ( Expr )
+WhileStmt -> while ( Expr ) Block
 Stmt -> ForStmt
-ForStmt -> for ( Expr ; Expr ; Expr ) Stmts
+ForStmt -> for ( Expr ; Expr ; Expr ) Block
 Stmt -> AssignStmt
 AssignStmt -> Type Vars MVars ;
 Vars -> var
