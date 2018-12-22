@@ -1,4 +1,10 @@
+1.txt
 a.out
 a.exe
 /.vscode/
-1.csv
+analyze.xp
+Compiler.cbp
+Compiler.depend
+Compiler.layout
+/bin/
+/obj/

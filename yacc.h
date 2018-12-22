@@ -6,9 +6,61 @@
 #include <set>
 #include <map>
 #include <stack>
-#include "base.h"
+#include "token.h"
+#include "grammar.h"
 
 #define Yacc_DEBUG
+
+#ifndef YACC__32
+#define YACC__32
+
+typedef std::vector<token> receivers;
+typedef std::set<token> first_set;
+typedef struct { char action; int index; } movement;
+typedef std::map<token, std::vector<movement> > table_item;
+typedef struct {
+	int grammar_index;
+	int pointer;
+	token forward_word;
+} project;
+bool operator <(const project & p1, const project & p2){
+	if (p1.grammar_index > p2.grammar_index) return true;
+	else if (p1.grammar_index < p2.grammar_index) return false;
+	if (p1.pointer > p2.pointer) return true;
+	else if (p1.pointer < p2.pointer) return false;
+	if (p1.forward_word < p2.forward_word) return true;
+	return false;
+}
+
+bool operator == (const project & p1, const project & p2){
+	return p1.grammar_index == p2.grammar_index &&
+		p1.pointer == p2.pointer &&
+		p1.forward_word == p2.forward_word;
+}
+
+typedef struct {
+	std::vector<project> projects;
+	std::map<token, int> convert_to; /* Accept a token, and convert to the statement index */
+} statement;
+
+bool operator == (statement & p1, statement & p2) {
+	std::sort(p1.projects.begin(), p1.projects.end());
+	std::sort(p2.projects.begin(), p2.projects.end());
+	return p1.projects == p2.projects;
+}
+
+template <class T>
+std::ostream & operator << (std::ostream & os, const std::vector<T> & arr){
+    os << "[";
+    if (arr.size()){
+        for (int i = 0; i < arr.size() - 1; ++i){
+            os << arr[i] << ",";
+        }
+        os << arr[arr.size() - 1];
+    }
+    os << "]";
+	return os;
+}
 
 typedef struct {
 	int index;
@@ -260,12 +312,12 @@ private:
 		const std::vector<token> & word_seq,
 		int pointer,
 		movement now_movement) {
-		std::cout << "Status:[" << status_stk << "]" << " ";
-		std::cout << "Word_stk:[" << word_stk << "]" << " ";
+		std::cout << "Status: " << status_stk << " ";
+		std::cout << "Word_stk: " << word_stk << " ";
 		std::vector<token> part_word_seq;
 		for (int i = pointer; i < word_seq.size(); ++i)
 			part_word_seq.push_back(word_seq[i]);
-		std::cout << "InputStream:[" << part_word_seq << "]" << " ";
+		std::cout << "InputStream: " << part_word_seq << " ";
 		std::cout << now_movement.action << now_movement.index << std::endl;
 	}
 #endif
@@ -452,7 +504,7 @@ public:
 				throw 1;
 			}
 		}
-		
+
 #ifdef Yacc_DEBUG
 		for (int i = 0; i < node_set.size(); i++) {
 			std::cout << std::left << std::setw(2) << i << " : ";
@@ -487,32 +539,7 @@ public:
 				else
 					std::cout << std::setw(25) << "CompoundK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
 				break;
-			//default:
-			//	
-			//	std::cout << std::setw(25) << "CompoundK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
 			}
-
-			/*std::vector<Node *> new_node_set;
-			for (auto ii : node_set) {
-				if (ii->onetoken->type != UNTERMINATOR) {
-					Node * tempii = new Node;
-					tempii->index = ii->index;
-					tempii->onetoken = new token;
-					tempii->onetoken->type = ii->onetoken->type;
-					tempii->onetoken->value = ii->onetoken->value;
-					std::vector<int> new_children;
-					for (auto jj : ii->children) {
-						if (node_set[jj]->onetoken->type == UNTERMINATOR)
-					}
-				}
-			}*/
-
-
-
-
-
-
-
 			for (auto c : node_set[i]->children) {
 				std::cout << c << " ";
 			}
@@ -596,3 +623,4 @@ public:
 	}
 #endif
 };
+#endif // YACC__32

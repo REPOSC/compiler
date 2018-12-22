@@ -1,10 +1,10 @@
-#include "type.h"
 #include <fstream>
-#include "judgement.h"
-#include "base.h"
 #include <string>
 #include <cstring>
 #include <cmath>
+#include "type.h"
+#include "token.h"
+#include "grammar.h"
 #ifndef LEX__32
 #define LEX__32
 
@@ -195,6 +195,16 @@ private:
 				}
 				if (x__ > 0)
 					m_inputstream.get();
+				Symbol();
+				return get_token();
+			}
+			else if (x_ == '/')
+            {
+                m_inputstream.get();
+                while (m_inputstream.peek() != EOF && m_inputstream.peek() != '\n')
+                {
+                    m_inputstream.get();
+                }
 				Symbol();
 				return get_token();
 			}
@@ -575,7 +585,7 @@ const Lex::Node Lex::NAME1_[] = {
 	{token{DELIMITER, Delimiter_COMMA}, nullptr},
 	{token{DELIMITER, Delimiter_SEMICOLON}, nullptr}
 };
-const char Lex::ID2_[] = "*/%!=";
+const char Lex::ID2_[] = "*/%!=^";
 const Lex::Node Lex::NAME2_[] = {
 	{token{OPERATOR, Operator_MULTIPLE},
 		new Node({token{OPERATOR, Operator_MULTIPLE_ASSIGNMENT}, nullptr})},
@@ -586,7 +596,9 @@ const Lex::Node Lex::NAME2_[] = {
 	{token{OPERATOR, Operator_EXCLAMATION_MARK},
 		new Node({token{OPERATOR, Operator_NOT_EQUAL}, nullptr})},
 	{token{OPERATOR, Operator_ASSIGNMENT},
-		new Node({token{OPERATOR, Operator_EQUAL}, nullptr})}
+		new Node({token{OPERATOR, Operator_EQUAL}, nullptr})},
+	{token{OPERATOR, Operator_POWER},
+		new Node({token{OPERATOR, Operator_POWER_ASSIGNMENT}, nullptr})}
 };
 const char Lex::ID3_[] = "+-&|";
 const Lex::Node Lex::NAME3_[] = {

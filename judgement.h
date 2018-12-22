@@ -21,4 +21,8 @@ bool check_if_blank(char x)
 	return x == ' ' || x == '\t' || x == '\n' || x == '\r';
 }
 
+bool is_sep(char x) { return x == ' ' || x == '\t' || x == '\f'; };
+bool is_end(char x) { return x == '\n' || x == '\0'; }
+bool is_alpha(char x) { return isalpha(x); }
+
 #endif
