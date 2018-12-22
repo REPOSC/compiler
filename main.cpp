@@ -29,8 +29,21 @@ int main(int argc, char ** argv)
 		token start_word = grammars[0].before_word;
 
 		Yacc yacc(grammars, start_word);
-		yacc.build_LR1();
-		yacc.print();
+		if (strcmp(argv[1], "--init") == 0){
+            yacc.build_LR1();
+            yacc.print();
+            std::ofstream ofs("saved_table");
+            yacc.write_table(ofs);
+            return 0;
+		}
+        else {
+            std::ifstream ifs("saved_table");
+            if (!ifs){
+                fprintf(stderr, "Please use '--init' to initialize table first.");
+                exit(-1);
+            }
+            yacc.read_table(ifs);
+        }
 
 		Lex program_lex(argv[1]);
 		std::vector<token> tokens;

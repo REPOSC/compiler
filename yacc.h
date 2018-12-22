@@ -79,6 +79,37 @@ typedef struct {
 	int index;
 }OneWord;
 
+void write_table_item_to_file(const table_item & ti, std::ofstream & ofs){
+    ofs << ti.size() << std::endl;
+    for (auto it: ti){
+        write_token_to_file(it.first, ofs);
+        ofs << it.second.size() << " ";
+        for (auto mvt: it.second){
+            ofs << mvt.action << mvt.index << " ";
+        }
+        ofs << std::endl;
+    }
+}
+table_item read_table_item_from_file(std::ifstream & ifs){
+    table_item ti;
+    int token_size;
+    ifs >> token_size;
+    for (int i = 0; i < token_size; ++i){
+        token tk = read_token_from_file(ifs);
+        int vec_size;
+        ifs >> vec_size;
+        std::vector<movement> mvmts;
+        for (int j = 0; j < vec_size; ++j){
+            ifs.get();
+            movement mvmt;
+            mvmt.action = ifs.get();
+            ifs >> mvmt.index;
+            mvmts.push_back(mvmt);
+        }
+        ti[tk] = mvmts;
+    }
+    return ti;
+}
 
 class Yacc
 {
@@ -373,6 +404,25 @@ public:
 		}
 
 		build_table();
+	}
+
+    void write_table(std::ofstream & ofs){
+        /* Write built table to file */
+        ofs << m_movement_table.size() << std::endl;
+        for (auto current_tb_item: m_movement_table){
+            write_table_item_to_file(current_tb_item, ofs);
+        }
+	}
+
+	void read_table(std::ifstream & ifs){
+        /* Read built table from file */
+        m_movement_table.clear();
+        int all_size;
+        ifs >> all_size;
+        for (int i = 0; i < all_size; ++i){
+            table_item ti = read_table_item_from_file(ifs);
+            m_movement_table.push_back(ti);
+        }
 	}
 
 	void clear_LR1() {

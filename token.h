@@ -137,4 +137,57 @@ token MAIN_TOKEN = create_str_token(TERMINATOR, "main");
 token ABSTRACT_NUM_TOKEN = {ABSTRACT_NUM, 0};
 token ABSTRACT_VAR_TOKEN = {ABSTRACT_VAR, 0};
 
+void write_token_to_file(const token & tk, std::ofstream & ofs){
+    ofs << tk.type << " ";
+    switch (tk.type){
+        case VARNAME:
+		case STRING:
+		case UNTERMINATOR:
+        case TERMINATOR:
+            ofs << tk.value.var_name;
+			break;
+		case TYPENAME:
+		case OPERATOR:
+		case CONTROLLER:
+		case DELIMITER:
+			ofs << tk.value.sym_name;
+			break;
+		case INT_NUM:
+			ofs << tk.value.int_value;
+			break;
+		case REAL_NUM:
+			ofs << tk.value.real_value;
+			break;
+    }
+    ofs << std::endl;
+}
+token read_token_from_file(std::ifstream & ifs){
+    token tk;
+    ifs >> tk.type;
+    std::string temp_str;
+    switch (tk.type){
+        case VARNAME:
+		case STRING:
+		case UNTERMINATOR:
+        case TERMINATOR:
+            ifs >> temp_str;
+			tk.value.var_name = new char[temp_str.size() + 1];
+			strcpy(tk.value.var_name, temp_str.c_str());
+			break;
+		case TYPENAME:
+		case OPERATOR:
+		case CONTROLLER:
+		case DELIMITER:
+			ifs >> tk.value.sym_name;
+			break;
+		case INT_NUM:
+			ifs >> tk.value.int_value;
+			break;
+		case REAL_NUM:
+			ifs >> tk.value.real_value;
+			break;
+    }
+    return tk;
+}
+
 #endif
