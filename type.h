@@ -29,6 +29,8 @@ Types are:
 #define UNTERMINATOR 10 /* unterminators */
 #define ABSTRACT_NUM 11
 #define ABSTRACT_VAR 12
+#define STRANGE_TOKEN 13
+#define NULL_TOKEN 14
 
 #define EOF_TYPE 0xff
 #define ERR_TYPE 0xfe

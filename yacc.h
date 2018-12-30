@@ -75,9 +75,14 @@ bool operator ==(Node &a, Node &b) {
 }
 
 typedef struct {
-	token * onetoken;
+	token onetoken;
 	int index;
 }OneWord;
+
+typedef struct {
+	token onetoken;
+	std::vector<newNode *> children;
+}newNode, newWord;
 
 void write_table_item_to_file(const table_item & ti, std::ofstream & ofs){
     ofs << ti.size() << std::endl;
@@ -445,6 +450,149 @@ public:
 		return true;
 	}
 
+	//void makenode(grammar current_grammar, std::vector<newWord> & word_stk, std::vector<newNode *> & nodes){}
+	//void makeleaf(grammar current_grammar, std::vector<newWord> & word_stk, std::vector<newNode *> & nodes){}
+
+	void analyze1(const std::vector<token> & readin_seq) {
+		/* Output the process of LR1 derivation */
+		//check();
+		std::vector<int> status_stk;
+		std::vector<token> cout_word_stk;
+		std::vector<newWord> word_stk;//分析栈
+		std::string now_str;
+		std::vector<newNode *> nodes;//语法树节点
+		int now_status;
+		newNode * root = new newNode;
+		int pointer = 0;
+		status_stk.push_back(0);
+		bool finished = false;
+		while (!finished) {
+			token reserved_str = readin_seq[pointer];
+			token now_str;
+			if (reserved_str.type == VARNAME)
+				now_str.type = ABSTRACT_VAR;
+			else if (reserved_str.type == INT_NUM || reserved_str.type == REAL_NUM)
+				now_str.type = ABSTRACT_NUM;
+			else
+				now_str = reserved_str;
+			int now_status = status_stk.back();
+			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
+			{
+				movement now_movement = m_movement_table[now_status][now_str][0];
+#ifdef Yacc_DEBUG
+				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
+#endif
+				switch (now_movement.action) {
+				case 's':
+					status_stk.push_back(now_movement.index);
+					token onetoken;
+					onetoken.type = reserved_str.type;
+					onetoken.value = reserved_str.value;
+					word_stk.push_back(newWord{ onetoken, });
+					cout_word_stk.push_back(reserved_str);
+					++pointer;
+					break;
+
+				case 'r':
+					const grammar & current_grammar = m_grammars[now_movement.index];
+					int check_index = current_grammar.after_words.size();
+					std::vector<newWord> new_child;
+					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
+						token expected_string = current_grammar.after_words[check_index - 1];
+						if (expected_string != SPC_TOKEN) {
+							new_child.push_back(word_stk.back());
+							status_stk.pop_back();
+							word_stk.pop_back();
+							cout_word_stk.pop_back();
+						}
+					}
+					if (check_index) {
+						std::cout << "4444444444444444444444444444444444444444" << std::endl;
+						throw 3;
+					}
+					//reverse(new_child.begin(), new_child.end());
+					int child_len = new_child.size();
+					now_str = current_grammar.before_word;
+					now_status = status_stk.back();
+					token temp_token;
+					temp_token.type = now_str.type;
+					temp_token.value = now_str.value;
+					newWord temp_word;
+					temp_word.onetoken = temp_token;
+					switch (current_grammar.move) {
+					case 1:
+						newNode * temp_node = new newNode;
+						temp_node->onetoken = new_child.back().onetoken;
+						nodes.push_back(temp_node);
+						temp_word.children.push_back(temp_node);
+						break;
+					case 2:
+						newNode * temp_node = new newNode;
+						temp_node->onetoken = current_grammar.strange_token;
+						for (int n = 0; n < child_len; n++) {
+							if (new_child.back().onetoken.type == UNTERMINATOR) {
+								for (auto i : new_child.back().children) {
+									temp_node->children.push_back(i);
+								}
+							}
+							new_child.pop_back();
+						}
+						nodes.push_back(temp_node);
+						temp_word.children.push_back(temp_node);
+						break;
+					case 3:
+						for (int n = 0; n < child_len; n++) {
+							if (new_child.back().onetoken.type == UNTERMINATOR) {
+								for (auto i : new_child.back().children) {
+									temp_word.children.push_back(i);
+								}
+							}
+							new_child.pop_back();
+						}
+						break;
+					case 4:
+						newNode * temp_node = new newNode;
+						temp_node->onetoken = token{ NULL_TOKEN, };
+						nodes.push_back(temp_node);
+						temp_word.children.push_back(temp_node);
+						break;
+					}
+
+					if (now_str == m_start_word && status_stk.size() == 1 && status_stk.back() == 0) {
+						root = temp_word.children[0];
+						finished = true;
+					}
+					else {
+						word_stk.push_back(temp_word);
+						cout_word_stk.push_back(temp_word.onetoken);
+						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
+							now_movement = m_movement_table[now_status][now_str][0];
+							if (now_movement.action != ' ') {
+								std::cout << "2222222222222222222222222222222" << std::endl;
+								throw 3;
+							}
+							else status_stk.push_back(now_movement.index);
+						}
+						else {
+							std::cout << "33333333333333333333333333333" << std::endl;
+							throw 3;
+						}
+					}
+					break;
+				}
+			}
+			else {
+				std::cout << "11111111111111111111111111111111111111111" << std::endl;
+				std::cout << now_status << " " << now_str;
+				throw 1;
+			}
+		}
+
+#ifdef Yacc_DEBUG
+	
+#endif // Yacc_DEBUG
+	}
+
 	void analyze(const std::vector<token> & readin_seq) {
 		/* Output the process of LR1 derivation */
 		//check();
@@ -452,6 +600,7 @@ public:
 		std::vector<token> cout_word_stk;
 		std::vector<OneWord> word_stk;
 		std::string now_str;
+		std::vector<Node *> tree_node;
 		std::vector<Node *> node_set;//节点集合，语法树中所有的节点
 		int now_status;
 		int root;

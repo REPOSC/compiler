@@ -1,73 +1,67 @@
-Program -> void main ( ) Block
-Type -> int
-Type -> float
-Block -> { Stmts }
-Block -> Stmt
-Stmts -> { Stmts }
-Stmts -> Stmt Stmts
-Stmts -> Stmt
-Stmts -> space
-Stmt -> Expr ;
-Stmt -> ;
-Stmt -> return ;
-Stmt -> break ;
-Stmt -> ScanfStmt ;
-ScanfStmt -> scanf ( SStmt )
-SStmt -> var SVar
-SVar -> , var SVar
-SVar -> space
-Stmt -> PrintfStmt ;
-PrintfStmt -> printf ( PStmt )
-PStmt -> var PVar
-PStmt -> num PVar
-PVar -> , var PVar
-PVar -> , num PVar
-PVar -> space
-Stmt -> IfStmt
-IfStmt -> if ( Expr ) Block
-IfStmt -> if ( Expr ) Block else Block
-Stmt -> WhileStmt
-WhileStmt -> while ( Expr ) Block
-Stmt -> ForStmt
-ForStmt -> for ( Expr ; Expr ; Expr ) Block
-Stmt -> AssignStmt
-AssignStmt -> Type Vars MVars ;
-Vars -> var
-Vars -> var = Expr
-MVars -> space
-MVars -> , Vars MVars
-OpMath1 -> *
-OpMath1 -> /
-OpMath1 -> %
-OpMath2 -> +
-OpMath2 -> -
-OpMath3 -> ^
-OpJudge1 -> >
-OpJudge1 -> <
-OpJudge1 -> >=
-OpJudge1 -> <=
-OpJudge2 -> ==
-OpJudge2 -> !=
-Expr -> var 
-Expr -> Expr10 
-Expr1 -> var
-Expr1 -> num
-Expr1 -> ( Expr )
-Expr2 -> Expr1
-Expr2 -> ! Expr
-Expr3 -> Expr2
-Expr3 -> Expr2 OpMath1 Expr3
-Expr4 -> Expr3
-Expr4 -> Expr3 OpMath2 Expr4
-Expr5 -> Expr4
-Expr5 -> Expr4 OpJudge1 Expr5
-Expr6 -> Expr5
-Expr6 -> Expr5 OpJudge2 Expr6
-Expr7 -> Expr6
-Expr7 -> Expr6 OpMath3 Expr7
-Expr8 -> Expr7
-Expr8 -> Expr7 && Expr8
-Expr9 -> Expr8
-Expr9 -> Expr8 || Expr9
-Expr10 -> Expr9
-Expr10 -> var = Expr10
+Program -> void main ( ) Block               @ same @
+Mvar -> var                                  @ makeleaf @
+Mnum -> num                                  @ makeleaf @
+Type -> int                                  @ makeleaf @
+Type -> float                                @ makeleaf @
+Block -> { Stmts }                           @ same @
+Block -> Stmt                                @ same @
+Stmts -> { Stmts }                           @ same @
+Stmts -> Stmt Stmts                          @ same @
+Stmts -> Stmt                                @ same @
+Stmts -> space                               @ null @
+Stmt -> Expr ;                               @ same @
+Stmt -> ;                                    @ null @
+Stmt -> return ;                             @ makeleaf @
+Stmt -> break ;                              @ makeleaf @
+Stmt -> scanf ( SStmt )                      @ makenode scanf @
+SStmt -> Mvar SVars                          @ same @
+SVars -> , Mvar SVars                        @ same @
+SVars -> space                               @ null @
+Stmt -> printf ( PStmt )                     @ makenode printf @
+PStmt -> Mvar PVars                          @ same @
+PStmt -> Mnum PVars                          @ same @
+PVars -> , Mvar PVars                        @ same @
+PVars -> , Mnum PVars                        @ same @
+PVars -> space                               @ null @
+Stmt -> if ( Expr ) Block                    @ makenode if @
+Stmt -> if ( Expr ) Block else Block         @ makenode if @
+Stmt -> while ( Expr ) Block                 @ makenode while @
+Stmt -> do Block while ( Expr )              @ makenode do @
+Stmt -> for ( Exprs ; Exprs ; Exprs ) Block  @ makenode for @
+Stmt -> Type Vars MVars ;                    @ same @
+Vars -> Mvar                                 @ same @
+Vars -> Mvar = Expr                          @ makenode = @
+MVars -> space                               @ null @
+MVars -> , Vars MVars                        @ same @
+Exprs -> Expr                                @ same @
+Exprs -> Expr , Exprs                        @ same @
+Expr -> space                                @ null @
+Expr -> Expr10                               @ same @
+Expr1 -> Mvar                                @ same @
+Expr1 -> Mnum                                @ same @
+Expr1 -> ( Expr )                            @ same @
+Expr2 -> Expr1                               @ same @
+Expr2 -> ! Expr                              @ makenode ! @
+Expr3 -> Expr2                               @ same @
+Expr3 -> Expr2 * Expr3                       @ makenode * @
+Expr3 -> Expr2 / Expr3                       @ makenode / @
+Expr3 -> Expr2 % Expr3                       @ makenode % @
+Expr4 -> Expr3                               @ same @  
+Expr4 -> Expr3 + Expr4                       @ makenode + @
+Expr4 -> Expr3 - Expr4                       @ makenode - @
+Expr5 -> Expr4                               @ same @  
+Expr5 -> Expr4 > Expr5                       @ makenode > @
+Expr5 -> Expr4 < Expr5                       @ makenode < @
+Expr5 -> Expr4 >= Expr5                      @ makenode >= @
+Expr5 -> Expr4 <= Expr5                      @ makenode <= @
+Expr6 -> Expr5                               @ same @
+Expr6 -> Expr5 == Expr6                      @ makenode == @
+Expr6 -> Expr5 != Expr6                      @ makenode !=  @
+Expr7 -> Expr6                               @ same @
+Expr7 -> Expr6 ^ Expr7                       @ makenode ^ @
+Expr8 -> Expr7                               @ same @
+Expr8 -> Expr7 && Expr8                      @ makenode && @
+Expr9 -> Expr8                               @ same @
+Expr9 -> Expr8 || Expr9                      @ makenode || @
+Expr10 -> Expr9                              @ same @
+Expr10 -> Mvar = Expr10                      @ makenode = @
