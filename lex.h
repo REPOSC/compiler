@@ -5,6 +5,8 @@
 #include "type.h"
 #include "token.h"
 #include "grammar.h"
+#include <unordered_set>
+#include <unordered_map>
 #ifndef LEX__32
 #define LEX__32
 
@@ -55,12 +57,15 @@ class Lex
 		token result_;
 		Node * next;
 	};
-	const static std::string ID_[];
+	const static std::string ID_[], ID_MOVE_[], ID_STRANGE_[];
+	const static move_type NAME_MOVE_[];
 	const static token NAME_[];
 	const static char ID1_[], ID2_[], ID3_[], ID4_[];
 	const static Node NAME1_[], NAME2_[], NAME3_[], NAME4_[];
 
 private:
+	std::unordered_set<std::string> GR_STRANGE_;
+	std::unordered_map<std::string, move_type>  GR_MOVE_;
 	std::unordered_map<std::string, token> GR_;
 	std::unordered_map<char, Node> GR1_, GR2_, GR3_, GR4_;
 	std::ifstream m_inputstream;
@@ -413,6 +418,8 @@ private:
 		for (auto i = 0; ID2_[i]; ++i) GR2_[ID2_[i]] = NAME2_[i];
 		for (auto i = 0; ID3_[i]; ++i) GR3_[ID3_[i]] = NAME3_[i];
 		for (auto i = 0; ID4_[i]; ++i) GR4_[ID4_[i]] = NAME4_[i];
+		for (auto i = 0; ID_MOVE_[i][0]; ++i) GR_MOVE_[ID_MOVE_[i]] = NAME_MOVE_[i];
+		for (auto i = 0; ID_STRANGE_[i][0]; ++i) GR_STRANGE_.insert(ID_STRANGE_[i]);
 	}
 public:
 	Lex(const char * filename): m_inputstream(filename)
@@ -441,10 +448,11 @@ public:
 	word_seq get_seq_from_str(const std::string & str, int begin_index)
 	{
 		std::string temp_word;
+		int pointer = begin_index;
 		word_seq result;
-		while (is_sep(str[begin_index])) ++begin_index;
+		while (is_sep(str[pointer])) ++pointer;
 		while (true) {
-			if (is_sep(str[begin_index]) || is_end(str[begin_index])) {
+			if (is_sep(str[pointer]) || is_end(str[pointer])) {
 				token temp_token;
 				if (temp_word == var_str){
 					temp_token.type = ABSTRACT_VAR;
@@ -508,13 +516,36 @@ public:
                     temp_token = create_str_token(UNTERMINATOR, temp_word.c_str());
 				}
 				if (temp_word.size() > 0) result.push_back(temp_token);
-				if (is_end(str[begin_index])) break;
-				++begin_index;
+				if (is_end(str[pointer])) break;
+				++pointer;
 				temp_word = "";
-				while (is_sep(str[begin_index])) ++begin_index;
+				while (is_sep(str[pointer])) ++pointer;
 			}
-			else temp_word += str[begin_index++];
+			else temp_word += str[pointer++];
 		}
+		return result;
+	}
+	typedef struct {
+		move_type move;
+		token strange_token;
+	} move_group;
+	move_group get_move(const std::string & str) {
+		int pointer = 0;
+		move_group result;
+		while (!is_move_begin(str[pointer])) pointer++;
+		pointer++;
+		while (is_sep(str[pointer])) pointer++;
+		std::string temp_str;
+		while (is_alpha(str[pointer]))	temp_str += str[pointer++];
+		while (is_sep(str[pointer])) pointer++;
+		if (GR_MOVE_.find(temp_str) != GR_MOVE_.end())
+			result.move = GR_MOVE_[temp_str];
+		temp_str = "";
+		while (!is_end(str[pointer]) && !is_sep(str[pointer])) temp_str += str[pointer++];
+		if (GR_STRANGE_.find(temp_str) != GR_STRANGE_.end())
+			result.strange_token = create_str_token(STRANGE_TOKEN, temp_str.c_str());
+		else
+			result.strange_token = EOFLINE_TOKEN;
 		return result;
 	}
 	grammar get_grammar()
@@ -536,6 +567,9 @@ public:
 				pointer += sizeof("->") / sizeof(char);
                 result.before_word = create_str_token(UNTERMINATOR, temp_before_word.c_str());
 				result.after_words = get_seq_from_str(grammar_text, pointer);
+				move_group temp_group = get_move(grammar_text);
+				result.move = temp_group.move;
+				result.strange_token = temp_group.strange_token;
 				return result;
 			}
 		}
@@ -626,4 +660,9 @@ const Lex::Node Lex::NAME4_[] = {
 			new Node({token{OPERATOR, Operator_LEFT_SHIFT},
 				new Node({token{OPERATOR, Operator_LEFT_SHIFT_ASSIGNMENT}, nullptr})})})},
 };
+
+const std::string Lex::ID_MOVE_[] = {"makeleaf", "makenode", "same", "null", ""};
+const move_type Lex::NAME_MOVE_[] = {makeleaf, makenode, same, null};
+const std::string Lex::ID_STRANGE_[] = { "scanf", "printf", "if", "while", "do", "for", "=", "!",
+"*", "/", "%", "+", "-", ">", "<", ">=", "<=", "==", "!=", "^", "&&", "||" , "var_declaration","conpound", ""};
 #endif

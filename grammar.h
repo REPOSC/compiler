@@ -3,10 +3,18 @@
 #define GRAMMAR__32
 
 typedef std::vector<token> word_seq;
+
+#define makeleaf 1
+#define makenode 2
+#define same 3
+#define null 4
+
+typedef unsigned move_type;
+
 typedef struct {
 	token before_word;
-	std::vector<token> after_words;
-	int move;//存放@后面的第一个串，从1-4分别代表： makeleaf  makenode  same  null
+	word_seq after_words;
+	move_type move;//存放@后面的第一个串，从1-4分别代表： makeleaf  makenode  same  null
 	token strange_token;//存放从第二个token
 } grammar;
 bool operator == (const grammar & g1, const grammar & g2){

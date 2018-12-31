@@ -1,4 +1,4 @@
-Program -> void main ( ) Block               @ same @
+Program -> void main ( ) Block               @ makenode conpound @
 Mvar -> var                                  @ makeleaf @
 Mnum -> num                                  @ makeleaf @
 Type -> int                                  @ makeleaf @
@@ -14,12 +14,12 @@ Stmt -> ;                                    @ null @
 Stmt -> return ;                             @ makeleaf @
 Stmt -> break ;                              @ makeleaf @
 Stmt -> scanf ( SStmt )                      @ makenode scanf @
-SStmt -> Mvar SVars                          @ same @
+SStmt -> Mvar SVars                          @ makenode conpound @
 SVars -> , Mvar SVars                        @ same @
 SVars -> space                               @ null @
 Stmt -> printf ( PStmt )                     @ makenode printf @
-PStmt -> Mvar PVars                          @ same @
-PStmt -> Mnum PVars                          @ same @
+PStmt -> Mvar PVars                          @ makenode conpound @
+PStmt -> Mnum PVars                          @ makenode conpound @
 PVars -> , Mvar PVars                        @ same @
 PVars -> , Mnum PVars                        @ same @
 PVars -> space                               @ null @
@@ -28,13 +28,14 @@ Stmt -> if ( Expr ) Block else Block         @ makenode if @
 Stmt -> while ( Expr ) Block                 @ makenode while @
 Stmt -> do Block while ( Expr )              @ makenode do @
 Stmt -> for ( Exprs ; Exprs ; Exprs ) Block  @ makenode for @
-Stmt -> Type Vars MVars ;                    @ same @
+Stmt -> Type Vars MVars ;                    @ makenode var_declaration @
 Vars -> Mvar                                 @ same @
 Vars -> Mvar = Expr                          @ makenode = @
 MVars -> space                               @ null @
 MVars -> , Vars MVars                        @ same @
-Exprs -> Expr                                @ same @
-Exprs -> Expr , Exprs                        @ same @
+Exprs -> Expr MExprs                         @ makenode conpound @
+MExprs -> , Expr MExprs                      @ same @
+MExprs -> space                              @ same @
 Expr -> space                                @ null @
 Expr -> Expr10                               @ same @
 Expr1 -> Mvar                                @ same @
@@ -46,17 +47,17 @@ Expr3 -> Expr2                               @ same @
 Expr3 -> Expr2 * Expr3                       @ makenode * @
 Expr3 -> Expr2 / Expr3                       @ makenode / @
 Expr3 -> Expr2 % Expr3                       @ makenode % @
-Expr4 -> Expr3                               @ same @  
+Expr4 -> Expr3                               @ same @
 Expr4 -> Expr3 + Expr4                       @ makenode + @
 Expr4 -> Expr3 - Expr4                       @ makenode - @
-Expr5 -> Expr4                               @ same @  
+Expr5 -> Expr4                               @ same @
 Expr5 -> Expr4 > Expr5                       @ makenode > @
 Expr5 -> Expr4 < Expr5                       @ makenode < @
 Expr5 -> Expr4 >= Expr5                      @ makenode >= @
 Expr5 -> Expr4 <= Expr5                      @ makenode <= @
 Expr6 -> Expr5                               @ same @
 Expr6 -> Expr5 == Expr6                      @ makenode == @
-Expr6 -> Expr5 != Expr6                      @ makenode !=  @
+Expr6 -> Expr5 != Expr6                      @ makenode != @
 Expr7 -> Expr6                               @ same @
 Expr7 -> Expr6 ^ Expr7                       @ makenode ^ @
 Expr8 -> Expr7                               @ same @

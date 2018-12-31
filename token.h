@@ -32,6 +32,7 @@ typedef union
 	REAL real_value;
 	STR_NAME terminator_name;
 	STR_NAME unterminator_name;
+	STR_NAME strange_name;
 } SYM_VALUE;
 
 typedef struct
@@ -85,6 +86,12 @@ std::ostream & operator << (std::ostream & os, const token & tk){
         case ABSTRACT_VAR:
             os << "ABSTRACT_VAR";
             break;
+		case STRANGE_TOKEN:
+			os << "Statement: " << tk.value.strange_name;
+			break;
+		case NULL_TOKEN:
+			os << "Null" ;
+			break;
 		default:
 			os << "Cannot print";
 	}

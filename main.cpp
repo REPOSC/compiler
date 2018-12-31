@@ -26,6 +26,11 @@ int main(int argc, char ** argv)
 				break;
 			grammars.push_back(gm);
 		}
+		//std::cout << "++++++++++++++++" << std::endl;
+		//for (auto i : grammars) {
+		//	std::cout << i.before_word<<"  "<<i.move << std::endl;
+		//}
+		//std::cout << "++++++++++++++++" << std::endl;
 		token start_word = grammars[0].before_word;
 
 		Yacc yacc(grammars, start_word);
@@ -56,7 +61,7 @@ int main(int argc, char ** argv)
 		}
 		std::cout<<"Program Tokens:"<<std::endl;
 		std::cout<<tokens<<std::endl;
-		yacc.analyze(tokens);
+		yacc.analyze1(tokens);
 		return 0;
 	}
 	catch (File_Error)

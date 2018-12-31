@@ -75,14 +75,19 @@ bool operator ==(Node &a, Node &b) {
 }
 
 typedef struct {
-	token onetoken;
+	token *onetoken;
 	int index;
 }OneWord;
 
-typedef struct {
+typedef struct newNode{
 	token onetoken;
 	std::vector<newNode *> children;
-}newNode, newWord;
+};
+
+typedef struct newWord{
+	token onetoken;
+	std::vector<newNode *> children;
+};
 
 void write_table_item_to_file(const table_item & ti, std::ofstream & ofs){
     ofs << ti.size() << std::endl;
@@ -132,6 +137,8 @@ private:
 		grammar agm_g;
 		agm_g.after_words.push_back(m_start_word);
 		agm_g.before_word = m_start_word = BEGIN_TOKEN;
+		agm_g.move = same;
+		agm_g.strange_token = EOFLINE_TOKEN;
 		return agm_g;
 	}
 
@@ -450,8 +457,28 @@ public:
 		return true;
 	}
 
-	//void makenode(grammar current_grammar, std::vector<newWord> & word_stk, std::vector<newNode *> & nodes){}
-	//void makeleaf(grammar current_grammar, std::vector<newWord> & word_stk, std::vector<newNode *> & nodes){}
+
+	void print_tree(newNode * root, std::string s) {
+		if (!root) {		
+			return;
+		}
+		else {
+			if(root->onetoken.type != NULL_TOKEN)
+			    std::cout << s + "  |---" <<root->onetoken<<std::endl;
+			for (int i = 0; i < root->children.size(); i++) {
+				if (i == root->children.size() - 1 ){
+					print_tree(root->children[i], s + "      ");
+				}
+				else {
+					print_tree(root->children[i], s + "  |   ");
+				}
+			}
+			//for (auto i : root->children) {
+			//	print_tree(i,s+"  |   ");
+			//}
+			return;
+		}
+	}
 
 	void analyze1(const std::vector<token> & readin_seq) {
 		/* Output the process of LR1 derivation */
@@ -479,7 +506,7 @@ public:
 			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
 			{
 				movement now_movement = m_movement_table[now_status][now_str][0];
-#ifdef Yacc_DEBUG
+#ifdef Yacc_DEBUGs
 				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
 #endif
 				switch (now_movement.action) {
@@ -517,17 +544,16 @@ public:
 					token temp_token;
 					temp_token.type = now_str.type;
 					temp_token.value = now_str.value;
-					newWord temp_word;
-					temp_word.onetoken = temp_token;
+					newWord left_word;
+					left_word.onetoken = temp_token;
+					newNode * temp_node = new newNode;
 					switch (current_grammar.move) {
-					case 1:
-						newNode * temp_node = new newNode;
+					case makeleaf:
 						temp_node->onetoken = new_child.back().onetoken;
 						nodes.push_back(temp_node);
-						temp_word.children.push_back(temp_node);
+						left_word.children.push_back(temp_node);
 						break;
-					case 2:
-						newNode * temp_node = new newNode;
+					case makenode:
 						temp_node->onetoken = current_grammar.strange_token;
 						for (int n = 0; n < child_len; n++) {
 							if (new_child.back().onetoken.type == UNTERMINATOR) {
@@ -538,33 +564,32 @@ public:
 							new_child.pop_back();
 						}
 						nodes.push_back(temp_node);
-						temp_word.children.push_back(temp_node);
+						left_word.children.push_back(temp_node);
 						break;
-					case 3:
+					case same:
 						for (int n = 0; n < child_len; n++) {
 							if (new_child.back().onetoken.type == UNTERMINATOR) {
 								for (auto i : new_child.back().children) {
-									temp_word.children.push_back(i);
+									left_word.children.push_back(i);
 								}
 							}
 							new_child.pop_back();
 						}
 						break;
-					case 4:
-						newNode * temp_node = new newNode;
+					case null:
 						temp_node->onetoken = token{ NULL_TOKEN, };
 						nodes.push_back(temp_node);
-						temp_word.children.push_back(temp_node);
+						left_word.children.push_back(temp_node);
 						break;
 					}
 
 					if (now_str == m_start_word && status_stk.size() == 1 && status_stk.back() == 0) {
-						root = temp_word.children[0];
+						root = left_word.children[0];
 						finished = true;
 					}
 					else {
-						word_stk.push_back(temp_word);
-						cout_word_stk.push_back(temp_word.onetoken);
+						word_stk.push_back(left_word);
+						cout_word_stk.push_back(left_word.onetoken);
 						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
 							now_movement = m_movement_table[now_status][now_str][0];
 							if (now_movement.action != ' ') {
@@ -587,165 +612,171 @@ public:
 				throw 1;
 			}
 		}
-
 #ifdef Yacc_DEBUG
-	
+		std::cout << "________________" << std::endl;
+		print_tree(root, "");
+		std::cout << "________________" << std::endl;
 #endif // Yacc_DEBUG
+		//std::cout << "________________" << std::endl;
+		//for (auto i : nodes) {
+		//	std::cout << i->onetoken << std::endl;
+		//}
+		//std::cout << "________________" << std::endl;
 	}
 
-	void analyze(const std::vector<token> & readin_seq) {
-		/* Output the process of LR1 derivation */
-		//check();
-		std::vector<int> status_stk;
-		std::vector<token> cout_word_stk;
-		std::vector<OneWord> word_stk;
-		std::string now_str;
-		std::vector<Node *> tree_node;
-		std::vector<Node *> node_set;//节点集合，语法树中所有的节点
-		int now_status;
-		int root;
-		int pointer = 0;
-		status_stk.push_back(0);
-		bool finished = false;
-		while (!finished) {
-			token reserved_str = readin_seq[pointer];
-			token now_str;
-			if (reserved_str.type == VARNAME)
-				now_str.type = ABSTRACT_VAR;
-			else if (reserved_str.type == INT_NUM || reserved_str.type == REAL_NUM)
-				now_str.type = ABSTRACT_NUM;
-			else
-				now_str = reserved_str;
-			int now_status = status_stk.back();
-			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
-			{
-				movement now_movement = m_movement_table[now_status][now_str][0];
-#ifdef Yacc_DEBUG
-				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
-#endif
-				token * onetoken = new token;
-				switch (now_movement.action) {
-				case 's':
-					status_stk.push_back(now_movement.index);
-					onetoken->type = reserved_str.type;
-					onetoken->value = reserved_str.value;
-					word_stk.push_back(OneWord{ onetoken, -1 });
-					cout_word_stk.push_back(reserved_str);
-					++pointer;
-					break;
-
-				case 'r':
-					const grammar & current_grammar = m_grammars[now_movement.index];
-					int check_index = current_grammar.after_words.size();
-					std::vector<int> new_child;
-					bool flagone = false;//判断是不是操作符
-					bool flagtwo = false;//判断是不是操作符的孩子
-					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
-						token expected_string = current_grammar.after_words[check_index - 1];
-						if (expected_string != SPC_TOKEN) {
-							Node *new_node = new Node;
-							if (word_stk.back().index == -1) {
-								new_node->index = node_set.size();
-								new_node->onetoken = new token;
-								new_node->onetoken->type = word_stk.back().onetoken->type;
-								new_node->onetoken->value = word_stk.back().onetoken->value;
-								node_set.push_back(new_node);
-							}
-							else {
-								new_node = node_set[word_stk.back().index];
-							}
-							new_child.push_back(new_node->index);
-							status_stk.pop_back();
-							word_stk.pop_back();
-							cout_word_stk.pop_back();
-						}
-					}
-					if (check_index) {
-						std::cout << "4444444444444444444444444444444444444444" << std::endl;
-						throw 3;
-					}
-					reverse(new_child.begin(), new_child.end());
-					now_str = current_grammar.before_word;
-					now_status = status_stk.back();
-					Node *new_node = new Node;
-					new_node->index = node_set.size();
-					new_node->onetoken = new token;
-					new_node->onetoken->type = now_str.type;
-					new_node->onetoken->value = now_str.value;
-					new_node->children = new_child;
-					node_set.push_back(new_node);
-					if (now_str == m_start_word && status_stk.size() == 1 && status_stk.back() == 0) {
-						root = new_node->index;
-						finished = true;
-					}
-					else {
-						word_stk.push_back(OneWord{ new_node->onetoken, new_node->index });
-						cout_word_stk.push_back(*new_node->onetoken);
-						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
-							now_movement = m_movement_table[now_status][now_str][0];
-							if (now_movement.action != ' ') {
-								std::cout << "2222222222222222222222222222222" << std::endl;
-								throw 3;
-							}
-							else status_stk.push_back(now_movement.index);
-						}
-						else {
-							std::cout << "33333333333333333333333333333" << std::endl;
-							throw 3;
-						}
-					}
-					break;
-				}
-			}
-			else {
-				std::cout << "11111111111111111111111111111111111111111" << std::endl;
-				std::cout << now_status << " " << now_str;
-				throw 1;
-			}
-		}
-
-#ifdef Yacc_DEBUG
-		for (int i = 0; i < node_set.size(); i++) {
-			std::cout << std::left << std::setw(2) << i << " : ";
-			SYM_VALUE temp_value = node_set[i]->onetoken->value;
-			switch (node_set[i]->onetoken->type) {
-			case VARNAME:
-				std::cout << std::setw(25) << "ID Declaration" << "symbol:" << std::setw(8) << temp_value.var_name << "Children: ";
-				break;
-			case INT_NUM:
-				std::cout << std::setw(25) << "Const Declaration" << std::setw(15) << temp_value.int_value << "Children: ";
-				break;
-			case REAL_NUM:
-				std::cout << std::setw(25) << "Real Const Declaration" << std::setw(15) << temp_value.real_value << "Children: ";
-				break;
-			case TYPENAME:
-				std::cout << std::setw(25) << "Type Specifier" << "TYPENAME:"<<std::setw(6) << temp_value.sym_name << "Children: ";
-				break;
-			case OPERATOR:
-				std::cout << std::setw(25) << "Expr" << "OPERATOR:" << std::setw(6) << temp_value.sym_name << "Children: ";
-				break;
-			case CONTROLLER:
-				std::cout << std::setw(25) << "Controller" << "CONTROLLER:" << std::setw(3) << temp_value.sym_name << "Children: ";
-				break;
-			case DELIMITER:
-				std::cout << std::setw(25) << "Delimiter" << "DELIMITER:" << std::setw(5) << temp_value.sym_name << "Children: ";
-				break;
-			case UNTERMINATOR:
-				if (temp_value.unterminator_name == "WhileStmt" || temp_value.unterminator_name == "ForStmt" || temp_value.unterminator_name == "DoStmt")
-					std::cout << std::setw(25) << "RepeatK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-				else if (temp_value.unterminator_name == "AssignStmt")
-					std::cout << std::setw(25) << "Assign statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-				else
-					std::cout << std::setw(25) << "CompoundK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-				break;
-			}
-			for (auto c : node_set[i]->children) {
-				std::cout << c << " ";
-			}
-			std::cout << std::endl;
-		}
-#endif // Yacc_DEBUG
-	}
+//	void analyze(const std::vector<token> & readin_seq) {
+//		/* Output the process of LR1 derivation */
+//		//check();
+//		std::vector<int> status_stk;
+//		std::vector<token> cout_word_stk;
+//		std::vector<OneWord> word_stk;
+//		std::string now_str;
+//		std::vector<Node *> tree_node;
+//		std::vector<Node *> node_set;//节点集合，语法树中所有的节点
+//		int now_status;
+//		int root;
+//		int pointer = 0;
+//		status_stk.push_back(0);
+//		bool finished = false;
+//		while (!finished) {
+//			token reserved_str = readin_seq[pointer];
+//			token now_str;
+//			if (reserved_str.type == VARNAME)
+//				now_str.type = ABSTRACT_VAR;
+//			else if (reserved_str.type == INT_NUM || reserved_str.type == REAL_NUM)
+//				now_str.type = ABSTRACT_NUM;
+//			else
+//				now_str = reserved_str;
+//			int now_status = status_stk.back();
+//			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
+//			{
+//				movement now_movement = m_movement_table[now_status][now_str][0];
+//#ifdef Yacc_DEBUG
+//				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
+//#endif
+//				token * onetoken = new token;
+//				switch (now_movement.action) {
+//				case 's':
+//					status_stk.push_back(now_movement.index);
+//					onetoken->type = reserved_str.type;
+//					onetoken->value = reserved_str.value;
+//					word_stk.push_back(OneWord{ onetoken, -1 });
+//					cout_word_stk.push_back(reserved_str);
+//					++pointer;
+//					break;
+//
+//				case 'r':
+//					const grammar & current_grammar = m_grammars[now_movement.index];
+//					int check_index = current_grammar.after_words.size();
+//					std::vector<int> new_child;
+//					bool flagone = false;//判断是不是操作符
+//					bool flagtwo = false;//判断是不是操作符的孩子
+//					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
+//						token expected_string = current_grammar.after_words[check_index - 1];
+//						if (expected_string != SPC_TOKEN) {
+//							Node *new_node = new Node;
+//							if (word_stk.back().index == -1) {
+//								new_node->index = node_set.size();
+//								new_node->onetoken = new token;
+//								new_node->onetoken->type = word_stk.back().onetoken->type;
+//								new_node->onetoken->value = word_stk.back().onetoken->value;
+//								node_set.push_back(new_node);
+//							}
+//							else {
+//								new_node = node_set[word_stk.back().index];
+//							}
+//							new_child.push_back(new_node->index);
+//							status_stk.pop_back();
+//							word_stk.pop_back();
+//							cout_word_stk.pop_back();
+//						}
+//					}
+//					if (check_index) {
+//						std::cout << "4444444444444444444444444444444444444444" << std::endl;
+//						throw 3;
+//					}
+//					reverse(new_child.begin(), new_child.end());
+//					now_str = current_grammar.before_word;
+//					now_status = status_stk.back();
+//					Node *new_node = new Node;
+//					new_node->index = node_set.size();
+//					new_node->onetoken = new token;
+//					new_node->onetoken->type = now_str.type;
+//					new_node->onetoken->value = now_str.value;
+//					new_node->children = new_child;
+//					node_set.push_back(new_node);
+//					if (now_str == m_start_word && status_stk.size() == 1 && status_stk.back() == 0) {
+//						root = new_node->index;
+//						finished = true;
+//					}
+//					else {
+//						word_stk.push_back(OneWord{ new_node->onetoken, new_node->index });
+//						cout_word_stk.push_back(*new_node->onetoken);
+//						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
+//							now_movement = m_movement_table[now_status][now_str][0];
+//							if (now_movement.action != ' ') {
+//								std::cout << "2222222222222222222222222222222" << std::endl;
+//								throw 3;
+//							}
+//							else status_stk.push_back(now_movement.index);
+//						}
+//						else {
+//							std::cout << "33333333333333333333333333333" << std::endl;
+//							throw 3;
+//						}
+//					}
+//					break;
+//				}
+//			}
+//			else {
+//				std::cout << "11111111111111111111111111111111111111111" << std::endl;
+//				std::cout << now_status << " " << now_str;
+//				throw 1;
+//			}
+//		}
+//
+//#ifdef Yacc_DEBUG
+//		for (int i = 0; i < node_set.size(); i++) {
+//			std::cout << std::left << std::setw(2) << i << " : ";
+//			SYM_VALUE temp_value = node_set[i]->onetoken->value;
+//			switch (node_set[i]->onetoken->type) {
+//			case VARNAME:
+//				std::cout << std::setw(25) << "ID Declaration" << "symbol:" << std::setw(8) << temp_value.var_name << "Children: ";
+//				break;
+//			case INT_NUM:
+//				std::cout << std::setw(25) << "Const Declaration" << std::setw(15) << temp_value.int_value << "Children: ";
+//				break;
+//			case REAL_NUM:
+//				std::cout << std::setw(25) << "Real Const Declaration" << std::setw(15) << temp_value.real_value << "Children: ";
+//				break;
+//			case TYPENAME:
+//				std::cout << std::setw(25) << "Type Specifier" << "TYPENAME:"<<std::setw(6) << temp_value.sym_name << "Children: ";
+//				break;
+//			case OPERATOR:
+//				std::cout << std::setw(25) << "Expr" << "OPERATOR:" << std::setw(6) << temp_value.sym_name << "Children: ";
+//				break;
+//			case CONTROLLER:
+//				std::cout << std::setw(25) << "Controller" << "CONTROLLER:" << std::setw(3) << temp_value.sym_name << "Children: ";
+//				break;
+//			case DELIMITER:
+//				std::cout << std::setw(25) << "Delimiter" << "DELIMITER:" << std::setw(5) << temp_value.sym_name << "Children: ";
+//				break;
+//			case UNTERMINATOR:
+//				if (temp_value.unterminator_name == "WhileStmt" || temp_value.unterminator_name == "ForStmt" || temp_value.unterminator_name == "DoStmt")
+//					std::cout << std::setw(25) << "RepeatK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
+//				else if (temp_value.unterminator_name == "AssignStmt")
+//					std::cout << std::setw(25) << "Assign statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
+//				else
+//					std::cout << std::setw(25) << "CompoundK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
+//				break;
+//			}
+//			for (auto c : node_set[i]->children) {
+//				std::cout << c << " ";
+//			}
+//			std::cout << std::endl;
+//		}
+//#endif // Yacc_DEBUG
+//	} 
 
 #ifdef Yacc_DEBUG
 	void print() {
