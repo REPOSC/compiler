@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "yacc.h"
-
+#include "intermediate_code.h"
 int main(int argc, char ** argv)
 {
     freopen("analyze.xp", "w", stdout);
@@ -58,7 +58,18 @@ int main(int argc, char ** argv)
 		}
 		std::cout<<"Program Tokens:"<<std::endl;
 		std::cout<<tokens<<std::endl;
-		yacc.analyze1(tokens);
+		newNode *root = yacc.analyze1(tokens);
+		std::vector<four_tuple> total_buffer;
+		translate_expr(total_buffer, root);
+		for (int i = 0; i< total_buffer.size(); i++)
+		{
+			if (total_buffer[i].op == "jnz" || total_buffer[i].op == "j")
+				total_buffer[i].result = std::to_string(std::stoi(total_buffer[i].result) + Record::address_output);
+			Record::output_my_four_tuple(total_buffer[i]);
+		}
+		four_tuple temp = four_tuple{ "_","_","_","_" };
+		Record::output_my_four_tuple(temp);
+
 		return 0;
 	}
 	catch (File_Error)

@@ -1,4 +1,4 @@
-Program -> void main ( ) Block               @ makenode conpound @
+Program -> void main ( ) Block               @ same @
 Mvar -> var                                  @ makeleaf @
 Mnum -> num                                  @ makeleaf @
 Type -> int                                  @ makeleaf @
@@ -35,7 +35,6 @@ Vars -> Mvar = Expr                          @ makenode = @
 MVars -> space                               @ null @
 MVars -> , Vars MVars                        @ same @
 ExprsFirst -> MExprsFirst                    @ makenode conpound @
-MExprsFirst -> VarStmt , MExprsFirst         @ same @
 MExprsFirst -> Expr , MExprsFirst            @ same @
 MExprsFirst -> VarStmt                       @ same @
 MExprsFirst -> Expr                          @ same @

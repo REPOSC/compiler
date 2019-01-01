@@ -487,7 +487,7 @@ public:
 	}
 #endif //Abstract_TREE
 
-	void analyze1(const std::vector<token> & readin_seq) {
+	newNode* analyze1(const std::vector<token> & readin_seq) {
 		/* Output the process of LR1 derivation */
 		//check();
 		std::vector<int> status_stk;
@@ -624,6 +624,7 @@ public:
 		std::cout << "Abstract Tree:" << std::endl;
 		print_tree(root, "",true);
 #endif // Abstract_TREE
+		return root;
 	}
 
 #ifdef Yacc_DEBUG
