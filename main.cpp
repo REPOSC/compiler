@@ -31,7 +31,9 @@ int main(int argc, char ** argv)
 		Yacc yacc(grammars, start_word);
 		if (strcmp(argv[1], "--init") == 0){
             yacc.build_LR1();
+#ifdef Yacc_DEBUG
             yacc.print();
+#endif
             std::ofstream ofs("saved_table");
             yacc.write_table(ofs);
             return 0;
