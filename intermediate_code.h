@@ -165,11 +165,8 @@ std::string translate_var_declaration(std::vector<four_tuple> &buffer_tuple,newN
         while(now->onetoken.type != VARNAME){
 			now = now->children[0];
         }
-		std::cout << "good0";
         generate_declaration(buffer_tuple,declaration,now->onetoken.value.var_name);
-		std::cout << "good1";
 		translate_expr(buffer_tuple,action);
-		std::cout << "good2";
     }
 	return "";
 }
@@ -469,7 +466,35 @@ std::string translate_printf(std::vector<four_tuple> &buffer_tuple,newNode *node
     return "";
 }
 
-//bool type_check() {}
+#define Type_CHAR 0
+#define Type_DOUBLE 1
+#define Type_FLOAT 2
+#define Type_INT 3
+#define Type_SHORT 4
+#define Type_Pointer 5
+
+
+bool type_check_two_variable(newNode* node1, newNode* node2)
+{
+	int type1 = symbol_table[node1->onetoken.value.var_name];
+	int type2 = symbol_table[node2->onetoken.value.var_name];
+	switch (type1) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		if (type2 == Type_Pointer)
+			return false;
+		else
+			return true;
+	case 5:
+		if (type2 != Type_Pointer)
+			return false;
+		else
+			return true;
+	}
+}
 
 
 
@@ -498,12 +523,14 @@ std::string create_temp_variable_binary(std::vector<four_tuple> &buffer_tuple, n
         buffer_tuple.push_back(temp);
         }
         else{
+			if (!type_check_two_variable(node_expr->children[0], node_expr->children[1]))
+				throw 1;
         four_tuple temp = Record::generate_binary_operator(opera,judge_type_to_string(node_expr->children[0]),judge_type_to_string(node_expr->children[1]));
         buffer_tuple.push_back(temp);
         }
         if(opera != "=")
             return "t"+std::to_string(Record::temp_count);
-        else if(temp_variable1!="")
+        else if(temp_variable1 != "")
             return temp_variable1;
         else
             return judge_type_to_string(node_expr->children[0]);
@@ -527,136 +554,108 @@ std::string create_temp_variable_unary(std::vector<four_tuple> &buffer_tuple, ne
 }
 
 
-std::string translate_expr(std::vector<four_tuple> &buffer_tuple, newNode *node_expr){
-    //二元运算符部分
-	std::cout << "-------------------" << std::endl;
-	std::cout << node_expr->onetoken << std::endl;
+std::string translate_expr(std::vector<four_tuple> &buffer_tuple, newNode *node_expr) {
+	//二元运算符部分
+	//std::cout << "-------------------" << std::endl;
+	//std::cout << node_expr->onetoken << std::endl;
 	if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "+")) {
-		std::cout << "0";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "+");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "-")) {
-		std::cout << "1";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "-");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "*")) {
-		std::cout << "2";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "*");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "/")) {
-		std::cout << "3";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "/");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, ">")) {
-		std::cout << "4";
 		return create_temp_variable_binary(buffer_tuple, node_expr, ">");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "<")) {
-		std::cout << "5";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "<");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "<=")) {
-		std::cout << "6";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "<=");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, ">=")) {
-		std::cout << "7";
 		return create_temp_variable_binary(buffer_tuple, node_expr, ">=");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "==")) {
-		std::cout << "8";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "==");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "!=")) {
-		std::cout << "9";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "!=");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "&&")) {
-		std::cout << "10";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "&&");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "||")) {
-		std::cout << "11";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "||");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "%")) {
-		std::cout << "12";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "%");
 	}
 	//赋值的四元式与其他不同
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "=")) {
-		std::cout << "13";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "=");
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "^")) {
-		std::cout << "14";
 		return create_temp_variable_binary(buffer_tuple, node_expr, "^");
 		//一元运算符部分
 	}
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "!")) {
-		std::cout << "15";
 		return create_temp_variable_unary(buffer_tuple, node_expr, "!");
 	}
 	//语句部分没什么返回值
 	//if语句部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "if")) {
-		std::cout << "16";
 		translate_if(buffer_tuple, node_expr);
 		return "";
 	}
 	//for语句部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "for")) {
-		std::cout << "17";
 		translate_for(buffer_tuple, node_expr);
 		return "";
 	}
 	//while语句部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "while")) {
-		std::cout << "18";
 		translate_while(buffer_tuple, node_expr);
 		return "";
 	}
 	//do语句部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "do")) {
-		std::cout << "19";
 		translate_do(buffer_tuple, node_expr);
 		return "";
 	}
 	//var_declaration部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "var_declaration")) {
-		std::cout << "20";
 		translate_var_declaration(buffer_tuple, node_expr);
 		return "";
 	}
 	//conpound 部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "conpound")) {
-		std::cout << "21";
 		translate_conpound(buffer_tuple, node_expr);
 		return "";
 	}
 	//scanf部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "scanf")) {
-		std::cout << "22";
 		translate_scanf(buffer_tuple, node_expr);
 		return "";
 	}
 	//printf部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "printf")) {
-		std::cout << "23";
 		translate_printf(buffer_tuple, node_expr);
 		return "";
 	}
 	//为空直接返回
 	else if (node_expr->onetoken.type == NULL_TOKEN) {
-		std::cout << "24";
 		return "";
 	}
 	else {
-		std::cout << "25";
 		return "";
 	}
-	std::cout << "26" << std::endl;
-	return "";
 }
 
 

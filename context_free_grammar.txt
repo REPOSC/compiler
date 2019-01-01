@@ -27,7 +27,7 @@ Stmt -> if ( Expr ) Block                    @ makenode if @
 Stmt -> if ( Expr ) Block else Block         @ makenode if @
 Stmt -> while ( Expr ) Block                 @ makenode while @
 Stmt -> do Block while ( Expr )              @ makenode do @
-Stmt -> for ( ExprsFirst ; Exprs ; Exprs ) Block  @ makenode for @
+Stmt -> for ( ExprsFirst ; Expr ; Exprs ) Block  @ makenode for @
 Stmt -> VarStmt ;                            @ same @
 VarStmt -> Type Vars MVars                   @ makenode var_declaration @
 Vars -> Mvar                                 @ same @
