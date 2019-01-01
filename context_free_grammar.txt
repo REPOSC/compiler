@@ -3,7 +3,7 @@ Mvar -> var                                  @ makeleaf @
 Mnum -> num                                  @ makeleaf @
 Type -> int                                  @ makeleaf @
 Type -> float                                @ makeleaf @
-Block -> { Stmts }                           @ same @
+Block -> { Stmts }                           @ makenode conpound @
 Block -> Stmt                                @ same @
 Stmts -> { Stmts }                           @ same @
 Stmts -> Stmt Stmts                          @ same @
@@ -27,15 +27,21 @@ Stmt -> if ( Expr ) Block                    @ makenode if @
 Stmt -> if ( Expr ) Block else Block         @ makenode if @
 Stmt -> while ( Expr ) Block                 @ makenode while @
 Stmt -> do Block while ( Expr )              @ makenode do @
-Stmt -> for ( Exprs ; Exprs ; Exprs ) Block  @ makenode for @
-Stmt -> Type Vars MVars ;                    @ makenode var_declaration @
+Stmt -> for ( ExprsFirst ; Exprs ; Exprs ) Block  @ makenode for @
+Stmt -> VarStmt ;                            @ same @
+VarStmt -> Type Vars MVars                   @ makenode var_declaration @
 Vars -> Mvar                                 @ same @
 Vars -> Mvar = Expr                          @ makenode = @
 MVars -> space                               @ null @
 MVars -> , Vars MVars                        @ same @
-Exprs -> Expr MExprs                         @ makenode conpound @
-MExprs -> , Expr MExprs                      @ same @
-MExprs -> space                              @ same @
+ExprsFirst -> MExprsFirst                    @ makenode conpound @
+MExprsFirst -> VarStmt , MExprsFirst         @ same @
+MExprsFirst -> Expr , MExprsFirst            @ same @
+MExprsFirst -> VarStmt                       @ same @
+MExprsFirst -> Expr                          @ same @
+Exprs -> MExprs                              @ makenode conpound @
+MExprs -> Expr , MExprs                      @ same @
+MExprs -> Expr                               @ same @
 Expr -> space                                @ null @
 Expr -> Expr10                               @ same @
 Expr1 -> Mvar                                @ same @

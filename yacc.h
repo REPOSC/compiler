@@ -9,7 +9,8 @@
 #include "token.h"
 #include "grammar.h"
 
-#define Yacc_DEBUG
+//#define Yacc_DEBUG
+#define Abstract_TREE
 
 #ifndef YACC__32
 #define YACC__32
@@ -61,23 +62,6 @@ std::ostream & operator << (std::ostream & os, const std::vector<T> & arr){
     os << "]";
 	return os;
 }
-
-typedef struct {
-	int index;
-	token * onetoken;
-	char * syn;
-	char * inh;
-	std::vector<int> children;
-} Node;
-
-bool operator ==(Node &a, Node &b) {
-	return a.index == b.index;
-}
-
-typedef struct {
-	token *onetoken;
-	int index;
-}OneWord;
 
 typedef struct newNode{
 	token onetoken;
@@ -356,12 +340,15 @@ private:
 		int pointer,
 		movement now_movement) {
 		std::cout << "Status: " << status_stk << " ";
+		std::cout << std::endl;
 		std::cout << "Word_stk: " << word_stk << " ";
+		std::cout << std::endl;
 		std::vector<token> part_word_seq;
 		for (int i = pointer; i < word_seq.size(); ++i)
 			part_word_seq.push_back(word_seq[i]);
 		std::cout << "InputStream: " << part_word_seq << " ";
 		std::cout << now_movement.action << now_movement.index << std::endl;
+		std::cout << std::endl;
 	}
 #endif
 public:
@@ -458,7 +445,7 @@ public:
 	}
 
 
-#ifdef Yacc_DEBUG
+#ifdef Abstract_TREE
 	bool judge_null(newNode *root, int i){
 		for (int j = i + 1; j < root->children.size(); j++) {
 			if (root->children[j]->onetoken.type != NULL_TOKEN) {
@@ -498,7 +485,7 @@ public:
 			return;
 		}
 	}
-#endif //Yacc_DEBUG
+#endif //Abstract_TREE
 
 	void analyze1(const std::vector<token> & readin_seq) {
 		/* Output the process of LR1 derivation */
@@ -526,7 +513,7 @@ public:
 			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
 			{
 				movement now_movement = m_movement_table[now_status][now_str][0];
-#ifdef Yacc_DEBUGs
+#ifdef Yacc_DEBUG
 				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
 #endif
 				switch (now_movement.action) {
@@ -554,7 +541,7 @@ public:
 						}
 					}
 					if (check_index) {
-						std::cout << "4444444444444444444444444444444444444444" << std::endl;
+						std::cout << "444444 error" << std::endl;
 						throw 3;
 					}
 					//reverse(new_child.begin(), new_child.end());
@@ -613,13 +600,13 @@ public:
 						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
 							now_movement = m_movement_table[now_status][now_str][0];
 							if (now_movement.action != ' ') {
-								std::cout << "2222222222222222222222222222222" << std::endl;
+								std::cout << "222222 error" << std::endl;
 								throw 3;
 							}
 							else status_stk.push_back(now_movement.index);
 						}
 						else {
-							std::cout << "33333333333333333333333333333" << std::endl;
+							std::cout << "333333 error" << std::endl;
 							throw 3;
 						}
 					}
@@ -627,171 +614,17 @@ public:
 				}
 			}
 			else {
-				std::cout << "11111111111111111111111111111111111111111" << std::endl;
+				std::cout << "111111 error" << std::endl;
 				std::cout << now_status << " " << now_str;
 				throw 1;
 			}
 		}
-#ifdef Yacc_DEBUG
-		std::cout << "________________" << std::endl;
+#ifdef Abstract_TREE
+		std::cout << std::endl;
+		std::cout << "Abstract Tree:" << std::endl;
 		print_tree(root, "",true);
-		std::cout << "________________" << std::endl;
-#endif // Yacc_DEBUG
+#endif // Abstract_TREE
 	}
-
-//	void analyze(const std::vector<token> & readin_seq) {
-//		/* Output the process of LR1 derivation */
-//		//check();
-//		std::vector<int> status_stk;
-//		std::vector<token> cout_word_stk;
-//		std::vector<OneWord> word_stk;
-//		std::string now_str;
-//		std::vector<Node *> tree_node;
-//		std::vector<Node *> node_set;//节点集合，语法树中所有的节点
-//		int now_status;
-//		int root;
-//		int pointer = 0;
-//		status_stk.push_back(0);
-//		bool finished = false;
-//		while (!finished) {
-//			token reserved_str = readin_seq[pointer];
-//			token now_str;
-//			if (reserved_str.type == VARNAME)
-//				now_str.type = ABSTRACT_VAR;
-//			else if (reserved_str.type == INT_NUM || reserved_str.type == REAL_NUM)
-//				now_str.type = ABSTRACT_NUM;
-//			else
-//				now_str = reserved_str;
-//			int now_status = status_stk.back();
-//			if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end())
-//			{
-//				movement now_movement = m_movement_table[now_status][now_str][0];
-//#ifdef Yacc_DEBUG
-//				print_status(status_stk, cout_word_stk, readin_seq, pointer, now_movement);
-//#endif
-//				token * onetoken = new token;
-//				switch (now_movement.action) {
-//				case 's':
-//					status_stk.push_back(now_movement.index);
-//					onetoken->type = reserved_str.type;
-//					onetoken->value = reserved_str.value;
-//					word_stk.push_back(OneWord{ onetoken, -1 });
-//					cout_word_stk.push_back(reserved_str);
-//					++pointer;
-//					break;
-//
-//				case 'r':
-//					const grammar & current_grammar = m_grammars[now_movement.index];
-//					int check_index = current_grammar.after_words.size();
-//					std::vector<int> new_child;
-//					bool flagone = false;//判断是不是操作符
-//					bool flagtwo = false;//判断是不是操作符的孩子
-//					for (; !status_stk.empty() && !word_stk.empty() && check_index > 0; --check_index) {
-//						token expected_string = current_grammar.after_words[check_index - 1];
-//						if (expected_string != SPC_TOKEN) {
-//							Node *new_node = new Node;
-//							if (word_stk.back().index == -1) {
-//								new_node->index = node_set.size();
-//								new_node->onetoken = new token;
-//								new_node->onetoken->type = word_stk.back().onetoken->type;
-//								new_node->onetoken->value = word_stk.back().onetoken->value;
-//								node_set.push_back(new_node);
-//							}
-//							else {
-//								new_node = node_set[word_stk.back().index];
-//							}
-//							new_child.push_back(new_node->index);
-//							status_stk.pop_back();
-//							word_stk.pop_back();
-//							cout_word_stk.pop_back();
-//						}
-//					}
-//					if (check_index) {
-//						std::cout << "4444444444444444444444444444444444444444" << std::endl;
-//						throw 3;
-//					}
-//					reverse(new_child.begin(), new_child.end());
-//					now_str = current_grammar.before_word;
-//					now_status = status_stk.back();
-//					Node *new_node = new Node;
-//					new_node->index = node_set.size();
-//					new_node->onetoken = new token;
-//					new_node->onetoken->type = now_str.type;
-//					new_node->onetoken->value = now_str.value;
-//					new_node->children = new_child;
-//					node_set.push_back(new_node);
-//					if (now_str == m_start_word && status_stk.size() == 1 && status_stk.back() == 0) {
-//						root = new_node->index;
-//						finished = true;
-//					}
-//					else {
-//						word_stk.push_back(OneWord{ new_node->onetoken, new_node->index });
-//						cout_word_stk.push_back(*new_node->onetoken);
-//						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
-//							now_movement = m_movement_table[now_status][now_str][0];
-//							if (now_movement.action != ' ') {
-//								std::cout << "2222222222222222222222222222222" << std::endl;
-//								throw 3;
-//							}
-//							else status_stk.push_back(now_movement.index);
-//						}
-//						else {
-//							std::cout << "33333333333333333333333333333" << std::endl;
-//							throw 3;
-//						}
-//					}
-//					break;
-//				}
-//			}
-//			else {
-//				std::cout << "11111111111111111111111111111111111111111" << std::endl;
-//				std::cout << now_status << " " << now_str;
-//				throw 1;
-//			}
-//		}
-//
-//#ifdef Yacc_DEBUG
-//		for (int i = 0; i < node_set.size(); i++) {
-//			std::cout << std::left << std::setw(2) << i << " : ";
-//			SYM_VALUE temp_value = node_set[i]->onetoken->value;
-//			switch (node_set[i]->onetoken->type) {
-//			case VARNAME:
-//				std::cout << std::setw(25) << "ID Declaration" << "symbol:" << std::setw(8) << temp_value.var_name << "Children: ";
-//				break;
-//			case INT_NUM:
-//				std::cout << std::setw(25) << "Const Declaration" << std::setw(15) << temp_value.int_value << "Children: ";
-//				break;
-//			case REAL_NUM:
-//				std::cout << std::setw(25) << "Real Const Declaration" << std::setw(15) << temp_value.real_value << "Children: ";
-//				break;
-//			case TYPENAME:
-//				std::cout << std::setw(25) << "Type Specifier" << "TYPENAME:"<<std::setw(6) << temp_value.sym_name << "Children: ";
-//				break;
-//			case OPERATOR:
-//				std::cout << std::setw(25) << "Expr" << "OPERATOR:" << std::setw(6) << temp_value.sym_name << "Children: ";
-//				break;
-//			case CONTROLLER:
-//				std::cout << std::setw(25) << "Controller" << "CONTROLLER:" << std::setw(3) << temp_value.sym_name << "Children: ";
-//				break;
-//			case DELIMITER:
-//				std::cout << std::setw(25) << "Delimiter" << "DELIMITER:" << std::setw(5) << temp_value.sym_name << "Children: ";
-//				break;
-//			case UNTERMINATOR:
-//				if (temp_value.unterminator_name == "WhileStmt" || temp_value.unterminator_name == "ForStmt" || temp_value.unterminator_name == "DoStmt")
-//					std::cout << std::setw(25) << "RepeatK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-//				else if (temp_value.unterminator_name == "AssignStmt")
-//					std::cout << std::setw(25) << "Assign statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-//				else
-//					std::cout << std::setw(25) << "CompoundK statement" << std::setw(15) << temp_value.unterminator_name << "Children: ";
-//				break;
-//			}
-//			for (auto c : node_set[i]->children) {
-//				std::cout << c << " ";
-//			}
-//			std::cout << std::endl;
-//		}
-//#endif // Yacc_DEBUG
-//	} 
 
 #ifdef Yacc_DEBUG
 	void print() {
