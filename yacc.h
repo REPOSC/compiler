@@ -418,23 +418,23 @@ public:
 		build_table();
 	}
 
-    void write_table(std::ofstream & ofs){
-        /* Write built table to file */
-        ofs << m_movement_table.size() << std::endl;
-        for (auto current_tb_item: m_movement_table){
-            write_table_item_to_file(current_tb_item, ofs);
-        }
+	void write_table(std::ofstream & ofs) {
+		/* Write built table to file */
+		ofs << m_movement_table.size() << std::endl;
+		for (auto current_tb_item : m_movement_table) {
+			write_table_item_to_file(current_tb_item, ofs);
+		}
 	}
 
-	void read_table(std::ifstream & ifs){
-        /* Read built table from file */
-        m_movement_table.clear();
-        int all_size;
-        ifs >> all_size;
-        for (int i = 0; i < all_size; ++i){
-            table_item ti = read_table_item_from_file(ifs);
-            m_movement_table.push_back(ti);
-        }
+	void read_table(std::ifstream & ifs) {
+		/* Read built table from file */
+		m_movement_table.clear();
+		int all_size;
+		ifs >> all_size;
+		for (int i = 0; i < all_size; ++i) {
+			table_item ti = read_table_item_from_file(ifs);
+			m_movement_table.push_back(ti);
+		}
 	}
 
 	void clear_LR1() {
@@ -458,27 +458,47 @@ public:
 	}
 
 
-	void print_tree(newNode * root, std::string s) {
+#ifdef Yacc_DEBUG
+	bool judge_null(newNode *root, int i){
+		for (int j = i + 1; j < root->children.size(); j++) {
+			if (root->children[j]->onetoken.type != NULL_TOKEN) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void print_tree(newNode * root, std::string s, bool last) {
 		if (!root) {		
 			return;
 		}
 		else {
 			if(root->onetoken.type != NULL_TOKEN)
 			    std::cout << s + "  |---" <<root->onetoken<<std::endl;
-			for (int i = 0; i < root->children.size(); i++) {
-				if (i == root->children.size() - 1 ){
-					print_tree(root->children[i], s + "      ");
+			int len = root->children.size();
+			for (int i = 0; i < len; i++) {
+				if (last) {
+					if (judge_null(root,i)){
+						print_tree(root->children[i], s + "      ", true);
+					}
+					else {
+						print_tree(root->children[i], s + "      ", false);
+					}
 				}
 				else {
-					print_tree(root->children[i], s + "  |   ");
+					if (judge_null(root, i)) {
+						print_tree(root->children[i], s + "  |   ", true);
+					}
+					else {
+						print_tree(root->children[i], s + "  |   ", false);
+					}
 				}
+
 			}
-			//for (auto i : root->children) {
-			//	print_tree(i,s+"  |   ");
-			//}
 			return;
 		}
 	}
+#endif //Yacc_DEBUG
 
 	void analyze1(const std::vector<token> & readin_seq) {
 		/* Output the process of LR1 derivation */
@@ -614,14 +634,9 @@ public:
 		}
 #ifdef Yacc_DEBUG
 		std::cout << "________________" << std::endl;
-		print_tree(root, "");
+		print_tree(root, "",true);
 		std::cout << "________________" << std::endl;
 #endif // Yacc_DEBUG
-		//std::cout << "________________" << std::endl;
-		//for (auto i : nodes) {
-		//	std::cout << i->onetoken << std::endl;
-		//}
-		//std::cout << "________________" << std::endl;
 	}
 
 //	void analyze(const std::vector<token> & readin_seq) {
