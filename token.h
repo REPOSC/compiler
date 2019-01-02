@@ -106,7 +106,7 @@ std::ostream & operator << (std::ostream & os, const token & tk) {
 	return os;
 }
 typedef std::unordered_map<char *, int> SYMBOL_TABLE;
-SYMBOL_TABLE symbol_table;
+
 
 bool operator < (const token & tk, const token & tk1) {
 	if (tk.type < tk1.type) return true;

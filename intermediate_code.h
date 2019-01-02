@@ -145,14 +145,23 @@ std::string translate_conpound(std::vector<four_tuple> &buffer_tuple,newNode *no
     return "";
 }
 
+//SYMBOL_TABLE my_symbol_table;
+
 void generate_declaration(std::vector<four_tuple> &buffer_tuple,newNode *declaration,std::string variable_name){
     if(declaration->onetoken == token{TYPENAME, Type_INT}){
 		buffer_tuple.push_back(Record::generate_int(variable_name));
+		////my_symbol_table[variable_name] = Type_INT;
+		//my_symbol_table.insert({ variable_name.c_str(), Type_INT });
     }
     else{
 		buffer_tuple.push_back(Record::generate_double(variable_name));
-    }
+		//my_symbol_table[variable_name.c_str()] = Type_DOUBLE;
+		//yacc_symbol_table.insert({ symboltoken.value.var_name, typetoken.value.sym_name });
+	}
 }
+
+
+
 //var_declaration有问题，还得接着遍历左边第一个节点
 std::string translate_var_declaration(std::vector<four_tuple> &buffer_tuple,newNode *node_exprs){
     newNode* declaration = node_exprs->children[0];
@@ -165,6 +174,7 @@ std::string translate_var_declaration(std::vector<four_tuple> &buffer_tuple,newN
         while(now->onetoken.type != VARNAME){
 			now = now->children[0];
         }
+
         generate_declaration(buffer_tuple,declaration,now->onetoken.value.var_name);
 		translate_expr(buffer_tuple,action);
     }
@@ -366,7 +376,7 @@ std::string translate_for(std::vector<four_tuple> &buffer_tuple,newNode *node_fo
 
     //跳到执行语句的指令,str2是我取出的e2运行的总结果的临时变量
     four_tuple temp_tuple = four_tuple{"jnz",str2,"_"
-    ,std::to_string(buffer_e3.size()+2)};//跳到stmt（stmt之前还有一条跳回）
+    ,std::to_string(buffer_e3.size()+3)};//跳到stmt（stmt之前还有一条跳回）
     buffer_tuple.push_back(temp_tuple);
 
     //跳出循环的指令
@@ -472,10 +482,63 @@ std::string translate_printf(std::vector<four_tuple> &buffer_tuple,newNode *node
 #define Type_INT 3
 #define Type_SHORT 4
 #define Type_Pointer 5
+SYMBOL_TABLE yacc_symbol_table;
+
+token get_left_token(newNode * root) {
+	if (root->children.size() == 0) {
+		return root->onetoken;
+	}
+	else if (root->children[0]->onetoken.type != STRANGE_TOKEN) {
+		return root->children[0]->onetoken;
+	}
+	else {
+		return get_left_token(root->children[0]);
+	}
+}
+
+void get_symbol_table(newNode * root) {
+	if (!root || root->onetoken.type != STRANGE_TOKEN) {
+		return;
+	}
+	else {
+		for (auto tempnode : root->children) {
+			if (tempnode->onetoken.type == STRANGE_TOKEN) {
+				if (std::string(tempnode->onetoken.value.strange_name) == "var_declaration") {
+					token typetoken = tempnode->children[0]->onetoken;
+					for (int tempindex = 1; tempindex < tempnode->children.size(); tempindex++) {
+						token symboltoken = get_left_token(tempnode->children[tempindex]);
+						if (symboltoken.type != NULL_TOKEN) {
+							bool exist = true;
+							for (std::unordered_map<char*, int>::iterator iter = yacc_symbol_table.begin(); iter != yacc_symbol_table.end(); iter++)
+							{
+								if (strcmp(iter->first, symboltoken.value.var_name) == 0)
+								{
+									iter->second = typetoken.value.sym_name;
+									exist = false;
+								}
+							}
+							if(exist)
+								yacc_symbol_table.insert({ symboltoken.value.var_name,typetoken.value.sym_name });
+						}
+					}
+				}
+				else {
+					get_symbol_table(tempnode);
+				}
+			}
+		}
+	}
+}
+SYMBOL_TABLE read_symbol_table() {
+	std::cout << std::endl;
+	return yacc_symbol_table;
+}
+
 
 
 bool type_check_two_variable(newNode* node1, newNode* node2)
 {
+	SYMBOL_TABLE symbol_table = read_symbol_table();
 	int type1 = symbol_table[node1->onetoken.value.var_name];
 	int type2 = symbol_table[node2->onetoken.value.var_name];
 	switch (type1) {

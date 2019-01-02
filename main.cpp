@@ -2,7 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include "yacc.h"
+#include<unordered_map>
 #include "intermediate_code.h"
+
 int main(int argc, char ** argv)
 {
     freopen("analyze.xp", "w", stdout);
@@ -59,6 +61,15 @@ int main(int argc, char ** argv)
 		std::cout<<"Program Tokens:"<<std::endl;
 		std::cout<<tokens<<std::endl;
 		newNode *root = yacc.analyze1(tokens);
+		//½¨Á¢·ûºÅ±í
+		get_symbol_table(root);
+
+		//SYMBOL_TABLE symbol_table = read_symbol_table();
+		//for (std::unordered_map<char*,int>::iterator iter = symbol_table.begin(); iter != symbol_table.end(); iter++)
+		//{
+		//	std::cout << iter->first << "\t" << iter->second << std::endl;
+		//}
+
 		std::vector<four_tuple> total_buffer;
 		translate_expr(total_buffer, root);
 		for (int i = 0; i< total_buffer.size(); i++)

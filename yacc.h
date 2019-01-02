@@ -116,6 +116,8 @@ private:
 	std::vector<statement> m_statements;
 	std::vector<table_item> m_movement_table;
 
+
+
 	grammar agm_grammars() {
 		/* Augment to current m_grammars */
 		grammar agm_g;
