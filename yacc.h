@@ -24,7 +24,7 @@ typedef struct {
 	int pointer;
 	token forward_word;
 } project;
-bool operator <(const project & p1, const project & p2){
+bool operator <(const project & p1, const project & p2) {
 	if (p1.grammar_index > p2.grammar_index) return true;
 	else if (p1.grammar_index < p2.grammar_index) return false;
 	if (p1.pointer > p2.pointer) return true;
@@ -33,7 +33,7 @@ bool operator <(const project & p1, const project & p2){
 	return false;
 }
 
-bool operator == (const project & p1, const project & p2){
+bool operator == (const project & p1, const project & p2) {
 	return p1.grammar_index == p2.grammar_index &&
 		p1.pointer == p2.pointer &&
 		p1.forward_word == p2.forward_word;
@@ -51,58 +51,58 @@ bool operator == (statement & p1, statement & p2) {
 }
 
 template <class T>
-std::ostream & operator << (std::ostream & os, const std::vector<T> & arr){
-    os << "[";
-    if (arr.size()){
-        for (int i = 0; i < arr.size() - 1; ++i){
-            os << arr[i] << ",";
-        }
-        os << arr[arr.size() - 1];
-    }
-    os << "]";
+std::ostream & operator << (std::ostream & os, const std::vector<T> & arr) {
+	os << "[";
+	if (arr.size()) {
+		for (int i = 0; i < arr.size() - 1; ++i) {
+			os << arr[i] << ",";
+		}
+		os << arr[arr.size() - 1];
+	}
+	os << "]";
 	return os;
 }
 
-typedef struct newNode{
+typedef struct newNode {
 	token onetoken;
 	std::vector<newNode *> children;
 };
 
-typedef struct newWord{
+typedef struct newWord {
 	token onetoken;
 	std::vector<newNode *> children;
 };
 
-void write_table_item_to_file(const table_item & ti, std::ofstream & ofs){
-    ofs << ti.size() << std::endl;
-    for (auto it: ti){
-        write_token_to_file(it.first, ofs);
-        ofs << it.second.size() << " ";
-        for (auto mvt: it.second){
-            ofs << mvt.action << mvt.index << " ";
-        }
-        ofs << std::endl;
-    }
+void write_table_item_to_file(const table_item & ti, std::ofstream & ofs) {
+	ofs << ti.size() << std::endl;
+	for (auto it : ti) {
+		write_token_to_file(it.first, ofs);
+		ofs << it.second.size() << " ";
+		for (auto mvt : it.second) {
+			ofs << mvt.action << mvt.index << " ";
+		}
+		ofs << std::endl;
+	}
 }
-table_item read_table_item_from_file(std::ifstream & ifs){
-    table_item ti;
-    int token_size;
-    ifs >> token_size;
-    for (int i = 0; i < token_size; ++i){
-        token tk = read_token_from_file(ifs);
-        int vec_size;
-        ifs >> vec_size;
-        std::vector<movement> mvmts;
-        for (int j = 0; j < vec_size; ++j){
-            ifs.get();
-            movement mvmt;
-            mvmt.action = ifs.get();
-            ifs >> mvmt.index;
-            mvmts.push_back(mvmt);
-        }
-        ti[tk] = mvmts;
-    }
-    return ti;
+table_item read_table_item_from_file(std::ifstream & ifs) {
+	table_item ti;
+	int token_size;
+	ifs >> token_size;
+	for (int i = 0; i < token_size; ++i) {
+		token tk = read_token_from_file(ifs);
+		int vec_size;
+		ifs >> vec_size;
+		std::vector<movement> mvmts;
+		for (int j = 0; j < vec_size; ++j) {
+			ifs.get();
+			movement mvmt;
+			mvmt.action = ifs.get();
+			ifs >> mvmt.index;
+			mvmts.push_back(mvmt);
+		}
+		ti[tk] = mvmts;
+	}
+	return ti;
 }
 
 class Yacc
@@ -115,7 +115,16 @@ private:
 	std::map<token, first_set> m_firsts;
 	std::vector<statement> m_statements;
 	std::vector<table_item> m_movement_table;
-
+	void yacc_output_failure(std::string error, grammar gra)
+	{
+		std::ofstream outfile;
+		outfile.open("error.txt");
+		// 再次向文件写入用户输入的数据
+		outfile << error << "  ";
+		outfile << gra.before_word << "->" << gra.after_words << std::endl;
+		// 关闭打开的文件
+		outfile.close();
+	}
 
 
 	grammar agm_grammars() {
@@ -448,7 +457,7 @@ public:
 
 
 #ifdef Abstract_TREE
-	bool judge_null(newNode *root, int i){
+	bool judge_null(newNode *root, int i) {
 		for (int j = i + 1; j < root->children.size(); j++) {
 			if (root->children[j]->onetoken.type != NULL_TOKEN) {
 				return false;
@@ -458,16 +467,16 @@ public:
 	}
 
 	void print_tree(newNode * root, std::string s, bool last) {
-		if (!root) {		
+		if (!root) {
 			return;
 		}
 		else {
-			if(root->onetoken.type != NULL_TOKEN)
-			    std::cout << s + "  |---" <<root->onetoken<<std::endl;
+			if (root->onetoken.type != NULL_TOKEN)
+				std::cout << s + "  |---" << root->onetoken << std::endl;
 			int len = root->children.size();
 			for (int i = 0; i < len; i++) {
 				if (last) {
-					if (judge_null(root,i)){
+					if (judge_null(root, i)) {
 						print_tree(root->children[i], s + "      ", true);
 					}
 					else {
@@ -543,8 +552,13 @@ public:
 						}
 					}
 					if (check_index) {
-						std::cout << "444444 error" << std::endl;
-						throw 3;
+
+						yacc_output_failure("ERROR4:", current_grammar);
+						std::cout << std::endl;
+						std::cout << "ERROR occur!" << std::endl;
+						exit(-1);
+						/*std::cout << "444444 error" << std::endl;
+						throw 3;*/
 					}
 					//reverse(new_child.begin(), new_child.end());
 					int child_len = new_child.size();
@@ -602,29 +616,41 @@ public:
 						if (m_movement_table[now_status].find(now_str) != m_movement_table[now_status].end()) {
 							now_movement = m_movement_table[now_status][now_str][0];
 							if (now_movement.action != ' ') {
-								std::cout << "222222 error" << std::endl;
-								throw 3;
+								yacc_output_failure("ERROR2:", current_grammar);
+								std::cout << std::endl;
+								std::cout << "ERROR occur!" << std::endl;
+								exit(-1);
+								/*std::cout << "222222 error" << std::endl;
+								throw 3;*/
 							}
 							else status_stk.push_back(now_movement.index);
 						}
 						else {
-							std::cout << "333333 error" << std::endl;
-							throw 3;
+							yacc_output_failure("ERROR3:", current_grammar);
+							std::cout << std::endl;
+							std::cout << "ERROR occur!" << std::endl;
+							exit(-1);
+							/*std::cout << "333333 error" << std::endl;
+							throw 3;*/
 						}
 					}
 					break;
 				}
 			}
 			else {
-				std::cout << "111111 error" << std::endl;
+				yacc_output_failure("ERROR1:", m_grammars[0]);
+				std::cout << std::endl;
+				std::cout << "ERROR occur!" << std::endl;
+				exit(-1);
+				/*std::cout << "111111 error" << std::endl;
 				std::cout << now_status << " " << now_str;
-				throw 1;
+				throw 1;*/
 			}
 		}
 #ifdef Abstract_TREE
 		std::cout << std::endl;
 		std::cout << "Abstract Tree:" << std::endl;
-		print_tree(root, "",true);
+		print_tree(root, "", true);
 #endif // Abstract_TREE
 		return root;
 	}

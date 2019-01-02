@@ -50,6 +50,7 @@ four_tuple Record::generate_no_cond_jump(int address){
 }
 
 four_tuple Record::generate_cond_jump(std::string former,std::string latter,int address){
+	//如果这个条件是1或者0或者varname这样的变量，就判断一下值，然后转为j指令（无条件跳转）
 	return four_tuple{"jnz",former,latter,std::to_string(address)};
 }
 
@@ -97,9 +98,9 @@ void Record::output_my_four_tuple(four_tuple &data)
 void Record::output_failure(std::string error)
 {
 	std::ofstream outfile;
-	outfile.open("error.txt");
+	outfile.open("error.txt",std::ios::app);
 	// 再次向文件写入用户输入的数据
-	outfile << error;
+	outfile << error<<std::endl;
 	// 关闭打开的文件
 	outfile.close();
 }
@@ -193,6 +194,10 @@ condition True NULL
     newNode* cond = node_exprs->children[0];
 	std::vector<four_tuple> buffer_cond;
 	std::string str1 = translate_expr(buffer_cond,cond);
+
+	if (cond->onetoken.type == NULL_TOKEN) {
+		Record::output_failure("Statement if's condition shouldn't be empty!");
+	}
 
     if(node_exprs->children.size() == 2){
             newNode* stmts = node_exprs->children[1];
@@ -559,6 +564,34 @@ bool type_check_two_variable(newNode* node1, newNode* node2)
 	}
 }
 
+void generate_temporary_variable_declaration(std::vector<four_tuple> &buffer_tuple, newNode *declaration, std::string variable_name) {
+	if (declaration->onetoken.type == INT_NUM) {
+		buffer_tuple.push_back(Record::generate_int(variable_name));
+	}
+	else if (declaration->onetoken.type == REAL_NUM) {
+		buffer_tuple.push_back(Record::generate_double(variable_name));
+	}
+	else if (declaration->onetoken.type == VARNAME) {
+		std::string name = declaration->onetoken.value.var_name;
+		for (std::unordered_map<char*, int>::iterator iter = yacc_symbol_table.begin(); iter != yacc_symbol_table.end(); iter++)
+		{
+			if (strcmp(iter->first, declaration->onetoken.value.var_name) == 0)
+			{
+				int type = iter->second;
+				if (type == INT_NUM) {
+					buffer_tuple.push_back(Record::generate_int(variable_name));
+				}
+				else if (type == REAL_NUM) {
+					buffer_tuple.push_back(Record::generate_double(variable_name));
+				}
+			}
+		}
+
+	}
+	else
+		Record::output_failure("Type not match");
+}
+
 
 
 std::string create_temp_variable_binary(std::vector<four_tuple> &buffer_tuple, newNode *node_expr,std::string opera){
@@ -566,7 +599,6 @@ std::string create_temp_variable_binary(std::vector<four_tuple> &buffer_tuple, n
 	std::string temp_variable2 = "";
 
 //        用strange_token单纯判断是叶子还是不是，不对！！！
-
         if(judge_strange_token(node_expr->children[0])){
              temp_variable1 = translate_expr(buffer_tuple,node_expr->children[0]);
         }
@@ -574,25 +606,31 @@ std::string create_temp_variable_binary(std::vector<four_tuple> &buffer_tuple, n
              temp_variable2 = translate_expr(buffer_tuple,node_expr->children[1]);
         }
         if(temp_variable1 != "" && temp_variable2 != ""){
+		//左右都是临时变量，就会找不到类型，那么就把临时变量存到符号表里
+		//generate_temporary_variable_declaration(buffer_tuple, , "t" + std::to_string(Record::temp_count));
         four_tuple temp = Record::generate_binary_operator(opera,temp_variable1,temp_variable2);
         buffer_tuple.push_back(temp);
         }
         else if(temp_variable1 != "" && temp_variable2 == ""){
+		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[1], "t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,temp_variable1,judge_type_to_string(node_expr->children[1]));
         buffer_tuple.push_back(temp);
         }
         else if(temp_variable1 == "" && temp_variable2 != ""){
+		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,judge_type_to_string(node_expr->children[0]),temp_variable2);
         buffer_tuple.push_back(temp);
         }
         else{
 			if (!type_check_two_variable(node_expr->children[0], node_expr->children[1]))
-				throw 1;
+				Record::output_failure("Type does not match");
+		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,judge_type_to_string(node_expr->children[0]),judge_type_to_string(node_expr->children[1]));
         buffer_tuple.push_back(temp);
         }
-        if(opera != "=")
-            return "t"+std::to_string(Record::temp_count);
+		if (opera != "=") {
+			return "t" + std::to_string(Record::temp_count);
+		}
         else if(temp_variable1 != "")
             return temp_variable1;
         else

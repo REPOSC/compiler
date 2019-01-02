@@ -12,6 +12,7 @@ Types are:
 6. delimiters: ; {} , \n \r\n
 */
 
+
 #ifndef TYPE__32
 #define TYPE__32
 
