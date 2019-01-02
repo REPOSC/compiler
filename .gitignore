@@ -9,4 +9,5 @@ Compiler.layout
 /obj/
 saved_table
 output.txt
+output_compile.txt
 error.txt

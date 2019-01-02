@@ -37,11 +37,13 @@ public:
 	static four_tuple generate_int(std::string variable_name);
 	static four_tuple generate_double(std::string variable_name);
 	static void output_my_four_tuple(four_tuple &data);
+	static void output_my_four_tuple1(four_tuple &data);
 	static void output_failure(std::string error);
 };
 
 int Record::address = 0;
 int Record::address_output = 0;
+
 int Record::temp_count = -1;
 
 four_tuple Record::generate_no_cond_jump(int address){
@@ -83,16 +85,28 @@ four_tuple Record::generate_double(std::string variable_name){
 }
 
 
+void Record::output_my_four_tuple1(four_tuple &data)
+{
+	std::ofstream outfile;
+	outfile.open("output_compile.txt", std::ios::app);
+	// 再次向文件写入用户输入的数据
+	outfile << "(" <<
+		data.op.c_str() << "," << data.arg1.c_str() << "," << data.arg2.c_str()
+		<< "," << data.result.c_str() << ")" << std::endl;
+	// 关闭打开的文件
+	outfile.close();
+}
+
 void Record::output_my_four_tuple(four_tuple &data)
 {
-   std::ofstream outfile;
-   outfile.open("output.txt",std::ios::app);
-   // 再次向文件写入用户输入的数据
-   outfile <<Record::address_output++<<","<<
-   data.op.c_str()<< ","<<data.arg1.c_str()<<","<<data.arg2.c_str()
-   <<","<<data.result.c_str()<< std::endl;
-   // 关闭打开的文件
-   outfile.close();
+	std::ofstream outfile;
+	outfile.open("output.txt", std::ios::app);
+	// 再次向文件写入用户输入的数据
+	outfile << Record::address_output++ << "," <<
+		data.op.c_str() << "," << data.arg1.c_str() << "," << data.arg2.c_str()
+		<< "," << data.result.c_str() << std::endl;
+	// 关闭打开的文件
+	outfile.close();
 }
 
 void Record::output_failure(std::string error)
@@ -135,7 +149,71 @@ void traverse_buffer(std::vector<four_tuple> & buffer_tuple, std::vector<four_tu
 }
 
 std::string translate_expr(std::vector<four_tuple> &buffer_tuple, newNode *node_expr);
+void optimization(std::vector<four_tuple> & buffer_tuple, SYMBOL_TABLE optimization_table) {
+	for (int i = 0; i < buffer_tuple.size(); i++) {
+		if (buffer_tuple[i].op == "=" && buffer_tuple[i].result[0] != 't'
+			&& !((buffer_tuple[i].result[0] >= 48) && (buffer_tuple[i].result[0] <= 57))
+			&& ((buffer_tuple[i].arg1[0] >= 48) && (buffer_tuple[i].arg1[0] <= 57))) {
 
+			bool not_exist = true;
+			for (std::unordered_map<char*, int>::iterator iter = optimization_table.begin(); iter != optimization_table.end(); iter++)
+			{
+				if (strcmp(iter->first, buffer_tuple[i].result.c_str()) == 0)
+				{
+					iter->second = std::stoi(buffer_tuple[i].arg1);
+					not_exist = false;
+				}
+			}
+			if (not_exist)
+				optimization_table.insert({ (char*)(buffer_tuple[i].result).c_str(), std::stoi(buffer_tuple[i].arg1) });
+		}
+	}
+	//确保i出现在右值之前没有再定义，且没有出现在赋值语句的左值，给右值为i的地方进行优化
+	for (std::unordered_map<char*, int>::iterator iter = optimization_table.begin(); iter != optimization_table.end(); iter++)
+	{
+		for (int i = 0; i < buffer_tuple.size(); i++) {
+			if (buffer_tuple[i].arg2 == std::string(iter->first)) {
+				bool re_defined = false;
+				int count = 0;
+				for (int j = 0; j < buffer_tuple.size(); j++) {
+					if (buffer_tuple[j].op == "=" && buffer_tuple[j].result == iter->first) {
+						re_defined = true;
+						count++;
+					}
+					if ((buffer_tuple[j].op == "i" || buffer_tuple[j].op == "j") && buffer_tuple[j].arg1 == iter->first) {
+						re_defined = true;
+						count++;
+					}
+				}
+				if (count == 1) {
+					buffer_tuple[i].arg2 = std::to_string(iter->second);
+				}
+			}
+			else if (buffer_tuple[i].arg1 == std::string(iter->first)) {
+				for (int j = 0; j < buffer_tuple.size(); j++) {
+					bool re_defined = false;
+					int count = 0;
+					if (buffer_tuple[j].op == "=" && buffer_tuple[j].result == iter->first) {
+						re_defined = true;
+						count++;
+					}
+					if ((buffer_tuple[j].op == "i" || buffer_tuple[j].op == "j") && buffer_tuple[j].arg1 == iter->first) {
+						re_defined = true;
+						count++;
+					}
+					if (count == 1 && buffer_tuple[i].op != "i" && buffer_tuple[i].op != "d" && buffer_tuple[i].arg1 != "i"
+						&& buffer_tuple[i].arg1 != "x"&& buffer_tuple[i].arg1 != "j"
+						&& buffer_tuple[i].arg1 != "n") {
+						buffer_tuple[i].arg1 = std::to_string(iter->second);
+					}
+
+				}
+
+			}
+
+		}
+	}
+}
 
 std::string translate_conpound(std::vector<four_tuple> &buffer_tuple,newNode *node_exprs){
     std::vector<four_tuple> buffer_ordered;
@@ -312,6 +390,9 @@ std::string translate_do(std::vector<four_tuple> &buffer_tuple,newNode *node_exp
     //2条跳转指令，两条是循环和跳出循环的，还要加基地址（跳转指令专用）
     temp_tuple = Record::generate_no_cond_jump(end_count);
     buffer_tuple.push_back(temp_tuple);
+	SYMBOL_TABLE optimization_table;
+	optimization(buffer_tuple, optimization_table);
+
     return "";
 }
 
@@ -346,6 +427,8 @@ std::string translate_while(std::vector<four_tuple> &buffer_tuple,newNode *node_
 	//跳回循环判断
 	temp_tuple = Record::generate_no_cond_jump(-int(buffer_cond.size())-int(buffer_stmts.size())-2);
 	buffer_tuple.push_back(temp_tuple);
+	SYMBOL_TABLE optimization_table;
+	optimization(buffer_tuple, optimization_table);
 
 
     return "";
@@ -400,43 +483,10 @@ std::string translate_for(std::vector<four_tuple> &buffer_tuple,newNode *node_fo
 
     temp_tuple = Record::generate_no_cond_jump(-1-int(buffer_stmts.size())- int(buffer_e3.size()));//跳回e3第一条指令
     buffer_tuple.push_back(temp_tuple);
-	
-	SYMBOL_TABLE optimization_table;
-	//找到了所有如 i = 10的量
-	for (int i = 0; i < buffer_tuple.size(); i++) {
-		if (buffer_tuple[i].op == "=" && buffer_tuple[i].result[0] != 't'
-			&& !((buffer_tuple[i].result[0]>=48) && (buffer_tuple[i].result[0]<=57))
-			&& ((buffer_tuple[i].arg1[0] >= 48) && (buffer_tuple[i].arg1[0] <= 57))){
-			optimization_table.insert({ (char*)(buffer_tuple[i].result).c_str(), std::stoi(buffer_tuple[i].arg1) });
-		}
-	}
-	//确保i出现在右值之前没有再定义，且没有出现在赋值语句的左值，给右值为i的地方进行优化
-	for (std::unordered_map<char*, int>::iterator iter = optimization_table.begin(); iter != optimization_table.end(); iter++)
-	{
-		std::cout << "first:    " << iter->first << std::endl << "second:    " << iter->second << std::endl;
-		for (int i = 0; i < buffer_tuple.size(); i++) {
-			if (buffer_tuple[i].arg2 == std::string(iter->first)) {
-				std::cout <<"op: "<<buffer_tuple[i].op<<" arg1: " << buffer_tuple[i].arg1 << " arg2: " << buffer_tuple[i].arg2 
-					<< " result: " << buffer_tuple[i].result <<std::endl;
-				bool re_defined = false;
-				int count = 0;
-				for (int j = 0; j < buffer_tuple.size(); j++) {
-					if (buffer_tuple[j].op == "=" && buffer_tuple[j].result == iter->first) {
-						re_defined = true;
-						count++;
-					}
-					if ((buffer_tuple[j].op == "i" || buffer_tuple[j].op == "j") && buffer_tuple[j].arg1 == iter->first) {
-						re_defined = true;
-						count++;
-					}
-				}
-				if (count!=1) {
-					buffer_tuple[i].arg2 = std::to_string(iter->second);
-				}
-			}
 
-		}
-	}
+	SYMBOL_TABLE optimization_table;
+	optimization(buffer_tuple, optimization_table);
+
 
 	return "";
 }

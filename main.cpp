@@ -70,6 +70,13 @@ int main(int argc, char ** argv)
 		//	std::cout << iter->first << "\t" << iter->second << std::endl;
 		//}
 
+		std::ofstream pre_output, pre_outfile_temp;
+		pre_output.open("output.txt", std::ios::trunc);
+		pre_outfile_temp.open("output_compile.txt", std::ios::trunc);
+		pre_outfile_temp.close();
+		pre_output.close();
+
+
 		std::vector<four_tuple> total_buffer;
 		translate_expr(total_buffer, root);
 		for (int i = 0; i< total_buffer.size(); i++)
@@ -78,8 +85,23 @@ int main(int argc, char ** argv)
 				total_buffer[i].result = std::to_string(std::stoi(total_buffer[i].result) + Record::address_output);
 			Record::output_my_four_tuple(total_buffer[i]);
 		}
+		four_tuple temp_here = four_tuple{ "_","_","_","_" };
+		Record::output_my_four_tuple(temp_here);
+
+
+		for (int i = 0; i <= Record::temp_count; i++) {
+			four_tuple temp = Record::generate_int("t" + std::to_string(i));
+			Record::output_my_four_tuple1(temp);
+		}
+		for (int i = 0; i< total_buffer.size(); i++)
+		{
+			if (total_buffer[i].op == "jnz" || total_buffer[i].op == "j")
+				total_buffer[i].result = std::to_string(std::stoi(total_buffer[i].result) + Record::temp_count + 2);
+			Record::output_my_four_tuple1(total_buffer[i]);
+		}
 		four_tuple temp = four_tuple{ "_","_","_","_" };
-		Record::output_my_four_tuple(temp);
+		Record::output_my_four_tuple1(temp);
+
 
 		return 0;
 	}
