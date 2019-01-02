@@ -1,17 +1,23 @@
 void main()
 {
-
-int a = 1;
-while(a < 3){
-a = a+3;
-if(a > 5){
+int b;
+for(int i = 0; i < 10;i = i+1)
+{
     int c = 5;
+    b = 3 + c;
+    
 }
-else {
-    float c = 6;
-}
+//int a = 1;
+//while(a < 3){
+//a = a+3;
+//if(a > 5){
+// int d = 3;
+//}
+//else {
+//    float c = 6;
+//}
 
-}
+//}
 
 }
 // this is a text

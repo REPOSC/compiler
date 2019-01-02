@@ -400,7 +400,45 @@ std::string translate_for(std::vector<four_tuple> &buffer_tuple,newNode *node_fo
 
     temp_tuple = Record::generate_no_cond_jump(-1-int(buffer_stmts.size())- int(buffer_e3.size()));//跳回e3第一条指令
     buffer_tuple.push_back(temp_tuple);
-    return "";
+	
+	SYMBOL_TABLE optimization_table;
+	//找到了所有如 i = 10的量
+	for (int i = 0; i < buffer_tuple.size(); i++) {
+		if (buffer_tuple[i].op == "=" && buffer_tuple[i].result[0] != 't'
+			&& !((buffer_tuple[i].result[0]>=48) && (buffer_tuple[i].result[0]<=57))
+			&& ((buffer_tuple[i].arg1[0] >= 48) && (buffer_tuple[i].arg1[0] <= 57))){
+			optimization_table.insert({ (char*)(buffer_tuple[i].result).c_str(), std::stoi(buffer_tuple[i].arg1) });
+		}
+	}
+	//确保i出现在右值之前没有再定义，且没有出现在赋值语句的左值，给右值为i的地方进行优化
+	for (std::unordered_map<char*, int>::iterator iter = optimization_table.begin(); iter != optimization_table.end(); iter++)
+	{
+		std::cout << "first:    " << iter->first << std::endl << "second:    " << iter->second << std::endl;
+		for (int i = 0; i < buffer_tuple.size(); i++) {
+			if (buffer_tuple[i].arg2 == std::string(iter->first)) {
+				std::cout <<"op: "<<buffer_tuple[i].op<<" arg1: " << buffer_tuple[i].arg1 << " arg2: " << buffer_tuple[i].arg2 
+					<< " result: " << buffer_tuple[i].result <<std::endl;
+				bool re_defined = false;
+				int count = 0;
+				for (int j = 0; j < buffer_tuple.size(); j++) {
+					if (buffer_tuple[j].op == "=" && buffer_tuple[j].result == iter->first) {
+						re_defined = true;
+						count++;
+					}
+					if ((buffer_tuple[j].op == "i" || buffer_tuple[j].op == "j") && buffer_tuple[j].arg1 == iter->first) {
+						re_defined = true;
+						count++;
+					}
+				}
+				if (count!=1) {
+					buffer_tuple[i].arg2 = std::to_string(iter->second);
+				}
+			}
+
+		}
+	}
+
+	return "";
 }
 
 std::string judge_type_to_string(newNode* node_exprs)
@@ -612,19 +650,19 @@ std::string create_temp_variable_binary(std::vector<four_tuple> &buffer_tuple, n
         buffer_tuple.push_back(temp);
         }
         else if(temp_variable1 != "" && temp_variable2 == ""){
-		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[1], "t" + std::to_string(Record::temp_count + 1));
+		//generate_temporary_variable_declaration(buffer_tuple,node_expr->children[1], "t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,temp_variable1,judge_type_to_string(node_expr->children[1]));
         buffer_tuple.push_back(temp);
         }
         else if(temp_variable1 == "" && temp_variable2 != ""){
-		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
+		//generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,judge_type_to_string(node_expr->children[0]),temp_variable2);
         buffer_tuple.push_back(temp);
         }
         else{
 			if (!type_check_two_variable(node_expr->children[0], node_expr->children[1]))
 				Record::output_failure("Type does not match");
-		generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
+		//generate_temporary_variable_declaration(buffer_tuple,node_expr->children[0],"t" + std::to_string(Record::temp_count + 1));
         four_tuple temp = Record::generate_binary_operator(opera,judge_type_to_string(node_expr->children[0]),judge_type_to_string(node_expr->children[1]));
         buffer_tuple.push_back(temp);
         }
