@@ -2,24 +2,93 @@
 #include <fstream>
 #include <iostream>
 #include "yacc.h"
-#include<unordered_map>
+#include <unordered_map>
 #include "intermediate_code.h"
+#include "to_asm.h"
 
+#ifdef _MSC_VER
+void init(std::string _filename){
+	//Delete old files:
+	std::wstring filename = StringToWString(_filename);
+	wchar_t now_directory[256];
+#else
+void init(std::string filename){
+	char now_directory[256];
+#endif
+	GetCurrentDirectory(256, now_directory);
+
+#ifdef _MSC_VER
+	wchar_t new_full_path[256];
+	std::wstring full_path = now_directory;
+#else
+	char new_full_path[256];
+	std::string full_path = now_directory;
+#endif
+
+#ifdef _MSC_VER
+	full_path += L"\\output.txt";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\output.txt";
+	strcpy(new_full_path, full_path.c_str());
+#endif
+	DeleteFile(new_full_path);
+	full_path = now_directory;
+
+#ifdef _MSC_VER
+	full_path += L"\\output_compile.txt";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\output_compile.txt";
+	strcpy(new_full_path, full_path.c_str());
+#endif
+	DeleteFile(new_full_path);
+	full_path = now_directory;
+
+#ifdef _MSC_VER
+	full_path += L"\\" + filename + L".asm";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\" + filename + ".asm";
+	strcpy(new_full_path, full_path.c_str());
+#endif
+	DeleteFile(new_full_path);
+	full_path = now_directory;
+
+#ifdef _MSC_VER
+	full_path += L"\\" + filename + L".obj";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\" + filename + ".obj";
+	strcpy(new_full_path, full_path.c_str());
+#endif
+
+	DeleteFile(new_full_path);
+	full_path = now_directory;
+
+#ifdef _MSC_VER
+	full_path += L"\\" + filename + L".exe";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\" + filename + ".exe";
+	strcpy(new_full_path, full_path.c_str());
+#endif
+	DeleteFile(new_full_path);
+}
 int main(int argc, char ** argv)
 {
-    freopen("analyze.xp", "w", stdout);
 	if (argc <= 1)
 	{
-		fprintf(stderr, "Fetal: No input file.\n");
-		system("pause");
+		std::cerr << "Fetal: No input file." << std::endl;
 		exit(-1);
 	}
 	else if (argc >= 3)
 	{
-		printf("Warning: the argument after %s will be ignored.\n", argv[1]);
+		std::cout << "Warning: the argument after " << argv[1] << " will be ignored." << std::endl;
 	}
 	try
 	{
+		init("main");
 		Lex grammar_lex("context_free_grammar.txt");
 		std::vector<grammar> grammars;
 		while (true){
@@ -32,23 +101,27 @@ int main(int argc, char ** argv)
 
 		Yacc yacc(grammars, start_word);
 		if (strcmp(argv[1], "--init") == 0){
+			std::cout << "Initializing table, please wait..." << std::endl;
             yacc.build_LR1();
 #ifdef Yacc_DEBUG
             yacc.print();
 #endif
             std::ofstream ofs("saved_table");
             yacc.write_table(ofs);
+			std::cout << "Table build success, now you can compile your program!" << std::endl;
             return 0;
 		}
         else {
             std::ifstream ifs("saved_table");
             if (!ifs){
-                fprintf(stderr, "Please use '--init' to initialize table first.");
+				std::cerr << "Please use '--init' to initialize table first." << std::endl;
                 exit(-1);
             }
+			std::cout << "Table file detected, reading..." << std::endl;
             yacc.read_table(ifs);
+			std::cout << "Table read success!" << std::endl;
         }
-
+		std::cout << "Analyzing program and building tuples..." << std::endl;
 		Lex program_lex(argv[1]);
 		std::vector<token> tokens;
 		while (true){
@@ -58,56 +131,31 @@ int main(int argc, char ** argv)
                 break;
             }
 		}
-		std::cout<<"Program Tokens:"<<std::endl;
-		std::cout<<tokens<<std::endl;
 		newNode *root = yacc.analyze1(tokens);
 		//½¨Á¢·ûºÅ±í
-		get_symbol_table(root);
-
-		//SYMBOL_TABLE symbol_table = read_symbol_table();
-		//for (std::unordered_map<char*,int>::iterator iter = symbol_table.begin(); iter != symbol_table.end(); iter++)
-		//{
-		//	std::cout << iter->first << "\t" << iter->second << std::endl;
-		//}
-
-		std::ofstream pre_output, pre_outfile_temp;
-		pre_output.open("output.txt", std::ios::trunc);
-		pre_outfile_temp.open("output_compile.txt", std::ios::trunc);
-		pre_outfile_temp.close();
-		pre_output.close();
-
+		//get_symbol_table(root);
+		Record::add_to_vars(root);
 
 		std::vector<four_tuple> total_buffer;
-		translate_expr(total_buffer, root);
-		for (int i = 0; i< total_buffer.size(); i++)
-		{
-			if (total_buffer[i].op == "jnz" || total_buffer[i].op == "j")
-				total_buffer[i].result = std::to_string(std::stoi(total_buffer[i].result) + Record::address_output);
-			Record::output_my_four_tuple(total_buffer[i]);
-		}
-		four_tuple temp_here = four_tuple{ "_","_","_","_" };
-		Record::output_my_four_tuple(temp_here);
+		Record::translate_expr(total_buffer, root);
+		four_tuple temp_end = four_tuple{ "_", "_", "_", "_" };
+		Record::adjust_jump(total_buffer);		
+		total_buffer.push_back(temp_end);
+		//Record::optimization(total_buffer);
+		Record::output_tuples(total_buffer);
 
-
-		for (int i = 0; i <= Record::temp_count; i++) {
-			four_tuple temp = Record::generate_int("t" + std::to_string(i));
-			Record::output_my_four_tuple1(temp);
-		}
-		for (int i = 0; i< total_buffer.size(); i++)
-		{
-			if (total_buffer[i].op == "jnz" || total_buffer[i].op == "j")
-				total_buffer[i].result = std::to_string(std::stoi(total_buffer[i].result) + Record::temp_count + 2);
-			Record::output_my_four_tuple1(total_buffer[i]);
-		}
-		four_tuple temp = four_tuple{ "_","_","_","_" };
-		Record::output_my_four_tuple1(temp);
-
-
+		std::cout << "Tuples build success!" << std::endl;
+		ToAsm::set_masm32_file();
+		std::ifstream ifs("output_compile.txt");
+		std::ofstream ofs("main.asm");
+		ToAsm::dispatch_file(ifs, ofs);
+		ToAsm::call_masm("main");
 		return 0;
 	}
 	catch (File_Error)
 	{
-		fprintf(stderr, "Fetal: Cannot open file %s.\n", argv[1]);
+		std::cerr << "Fetal: Cannot open file " << argv[1] << std::endl;
 		exit(-1);
 	}
+
 }

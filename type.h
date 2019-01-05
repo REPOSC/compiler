@@ -44,6 +44,7 @@ Types are:
 #define Type_INT 3
 #define Type_SHORT 4
 #define Type_VOID 5
+#define Type_Pointer 6
 
 
 /* Here are Operators */

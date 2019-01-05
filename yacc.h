@@ -10,7 +10,7 @@
 #include "grammar.h"
 
 //#define Yacc_DEBUG
-#define Abstract_TREE
+//#define Abstract_TREE
 
 #ifndef YACC__32
 #define YACC__32
@@ -63,12 +63,12 @@ std::ostream & operator << (std::ostream & os, const std::vector<T> & arr) {
 	return os;
 }
 
-typedef struct newNode {
+struct newNode {
 	token onetoken;
 	std::vector<newNode *> children;
 };
 
-typedef struct newWord {
+struct newWord {
 	token onetoken;
 	std::vector<newNode *> children;
 };
@@ -554,8 +554,8 @@ public:
 					if (check_index) {
 
 						yacc_output_failure("ERROR4:", current_grammar);
-						std::cout << std::endl;
-						std::cout << "ERROR occur!" << std::endl;
+						std::cerr << std::endl;
+						std::cerr << "ERROR occur!" << std::endl;
 						exit(-1);
 						/*std::cout << "444444 error" << std::endl;
 						throw 3;*/
@@ -617,8 +617,8 @@ public:
 							now_movement = m_movement_table[now_status][now_str][0];
 							if (now_movement.action != ' ') {
 								yacc_output_failure("ERROR2:", current_grammar);
-								std::cout << std::endl;
-								std::cout << "ERROR occur!" << std::endl;
+								std::cerr << std::endl;
+								std::cerr << "ERROR occur!" << std::endl;
 								exit(-1);
 								/*std::cout << "222222 error" << std::endl;
 								throw 3;*/
@@ -627,8 +627,8 @@ public:
 						}
 						else {
 							yacc_output_failure("ERROR3:", current_grammar);
-							std::cout << std::endl;
-							std::cout << "ERROR occur!" << std::endl;
+							std::cerr << std::endl;
+							std::cerr << "ERROR occur!" << std::endl;
 							exit(-1);
 							/*std::cout << "333333 error" << std::endl;
 							throw 3;*/
@@ -639,8 +639,8 @@ public:
 			}
 			else {
 				yacc_output_failure("ERROR1:", m_grammars[0]);
-				std::cout << std::endl;
-				std::cout << "ERROR occur!" << std::endl;
+				std::cerr << std::endl;
+				std::cerr << "ERROR occur!" << std::endl;
 				exit(-1);
 				/*std::cout << "111111 error" << std::endl;
 				std::cout << now_status << " " << now_str;

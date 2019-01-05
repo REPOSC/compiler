@@ -30,21 +30,21 @@ class Lex
 		{
 			if (debug_str[0] > 0)
 			{
-				printf("%-15s", debug_str.c_str());
+				std::cout << debug_str << std::endl;
 			}
 			else
 			{
-				printf("EOF            ", debug_str.c_str());
+				std::cout << "EOF            " << std::endl;
 			}
 			debug_str = "";
 		}
 		void Print_Symbol()
 		{
-			if (debug_str == "\n") printf("¶ÁÈ¡µ½»»ĞĞ·û£¬ºöÂÔ\n");
-			else if (debug_str == "\r") printf("¶ÁÈ¡µ½»Ø³µ·ûºÅ£¬ºöÂÔ\n");
-			else if (debug_str == " ") printf("¶ÁÈ¡µ½¿Õ¸ñ£¬ºöÂÔ\n");
-			else if (debug_str == "\t") printf("¶ÁÈ¡µ½ÖÆ±í·û£¬ºöÂÔ\n");
-			else printf("¡¾%s¡¿£¬ºöÂÔ\n", debug_str.c_str());
+			if (debug_str == "\n") std::cout << "¶ÁÈ¡µ½»»ĞĞ·û£¬ºöÂÔ\n" << std::endl;
+			else if (debug_str == "\r") std::cout << "¶ÁÈ¡µ½»Ø³µ·ûºÅ£¬ºöÂÔ\n" << std::endl;
+			else if (debug_str == " ") std::cout << "¶ÁÈ¡µ½¿Õ¸ñ£¬ºöÂÔ\n" << std::endl;
+			else if (debug_str == "\t") std::cout << "¶ÁÈ¡µ½ÖÆ±í·û£¬ºöÂÔ\n" << std::endl;
+			else std::cout << "¡¾%s¡¿£¬ºöÂÔ\n", debug_str.c_str() << std::endl;
 			debug_str = "";
 		}
 #else
