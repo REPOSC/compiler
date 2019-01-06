@@ -10,7 +10,7 @@
 #include "grammar.h"
 
 //#define Yacc_DEBUG
-//#define Abstract_TREE
+#define Abstract_TREE
 
 #ifndef YACC__32
 #define YACC__32

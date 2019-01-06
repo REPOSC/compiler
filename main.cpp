@@ -26,16 +26,6 @@ void init(std::string filename){
 #endif
 
 #ifdef _MSC_VER
-	full_path += L"\\output.txt";
-	lstrcpyW(new_full_path, full_path.c_str());
-#else
-	full_path += "\\output.txt";
-	strcpy(new_full_path, full_path.c_str());
-#endif
-	DeleteFile(new_full_path);
-	full_path = now_directory;
-
-#ifdef _MSC_VER
 	full_path += L"\\output_compile.txt";
 	lstrcpyW(new_full_path, full_path.c_str());
 #else
@@ -65,7 +55,18 @@ void init(std::string filename){
 
 	DeleteFile(new_full_path);
 	full_path = now_directory;
+	
+#ifdef _MSC_VER
+	full_path += L"\\error.txt";
+	lstrcpyW(new_full_path, full_path.c_str());
+#else
+	full_path += "\\error.txt";
+	strcpy(new_full_path, full_path.c_str());
+#endif
 
+	DeleteFile(new_full_path);
+	full_path = now_directory;
+	
 #ifdef _MSC_VER
 	full_path += L"\\" + filename + L".exe";
 	lstrcpyW(new_full_path, full_path.c_str());
