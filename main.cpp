@@ -139,9 +139,9 @@ int main(int argc, char ** argv)
 		std::vector<four_tuple> total_buffer;
 		Record::translate_expr(total_buffer, root);
 		four_tuple temp_end = four_tuple{ "_", "_", "_", "_" };
-		Record::adjust_jump(total_buffer);		
 		total_buffer.push_back(temp_end);
-		//Record::optimization(total_buffer);
+		Record::adjust_jump(total_buffer);
+		Record::optimization(total_buffer);
 		Record::output_tuples(total_buffer);
 
 		std::cout << "Tuples build success!" << std::endl;

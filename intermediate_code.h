@@ -5,6 +5,7 @@
 #include "yacc.h"
 #include "type.h"
 #include "judgement.h"
+#include "cal.h"
 #ifndef ERROR
 #define ERROR -1
 #endif
@@ -224,33 +225,60 @@ void inline Record::traverse_buffer(std::vector<four_tuple> & buffer_tuple, std:
 }
 
 void Record::optimization(std::vector<four_tuple> & buffer_tuple) {
-	std::vector<std::string> optimization_vars;
-	std::vector<std::string> optimization_vars_nums;
-	std::vector<unsigned> begin_tuple_index;
-	for (int i = 0; i < buffer_tuple.size(); ++i){
-		if (buffer_tuple[i].op == "=" && 
-			check_if_leu(buffer_tuple[i].result[0]) &&
-			check_if_led(buffer_tuple[i].arg1[0])){
-			optimization_vars.push_back(buffer_tuple[i].result);
-			optimization_vars_nums.push_back(buffer_tuple[i].arg1);
-			begin_tuple_index.push_back(i);
+	//优化1：消除多余的临时变量
+	std::vector<unsigned> jmp_table;
+	unsigned jmp_count = 0;
+	std::set<std::string> optimization_table = {
+		"+", "-", "*", "/",  ">",
+		"<", ">=", "<=", "==", "!=", "&&", "||", 
+	};
+	std::vector<unsigned> del_table;
+	for (int i = 0; i < buffer_tuple.size() - 1; ++i){
+		if (optimization_table.find(buffer_tuple[i].op) != optimization_table.end()
+			&& buffer_tuple[i].result[0] == 't' &&
+			buffer_tuple[i + 1].op == "=" &&
+			buffer_tuple[i].result == buffer_tuple[i + 1].arg1){
+			del_table.push_back(i);
+			++jmp_count;
 		}
+		jmp_table.push_back(jmp_count);
 	}
-	//确保i出现在右值之前没有再定义，且没有出现在赋值语句的左值，给右值为i的地方进行优化
-	for (int i = 0; i < optimization_vars.size(); ++i){
-		for (int j = begin_tuple_index[i] + 1; j < buffer_tuple.size(); ++j){
-			if (buffer_tuple[j].op == "=" && buffer_tuple[j].result == optimization_vars[i])
-				break;
-			else if (buffer_tuple[j].op == "s" && buffer_tuple[j].arg1 == optimization_vars[i])
-				break;
-			else {
-				if (buffer_tuple[j].arg1 == optimization_vars[i])
-					buffer_tuple[j].arg1 = optimization_vars_nums[i];
-				if (buffer_tuple[j].arg2 == optimization_vars[i])
-					buffer_tuple[j].arg2 = optimization_vars_nums[i];
+	jmp_table.push_back(jmp_count);
+	std::vector<four_tuple> result;
+	unsigned now_pointer = 0;
+	for (unsigned i = 0; i < buffer_tuple.size() - 1; ++i){
+		if (now_pointer < del_table.size() && i == del_table[now_pointer]){
+			result.push_back({ buffer_tuple[i].op, buffer_tuple[i].arg1,
+				buffer_tuple[i].arg2, buffer_tuple[i + 1].result });
+			++now_pointer;
+			++i;
+		}
+		else {
+			result.push_back(buffer_tuple[i]);
+			if (result.back().op == "j" || result.back().op == "jz" || result.back().op == "jnz"){
+				unsigned now_jmp = std::stoi(result[result.size() - 1].result) - 1;
+				now_jmp -= jmp_table[now_jmp];
+				result[result.size() - 1].result = std::to_string(now_jmp + 1);
 			}
 		}
 	}
+	result.push_back(buffer_tuple.back());
+
+	//优化2：如果两个源操作数都是常数，直接计算，并改成赋值语句
+	for (four_tuple & it : result){
+		if (optimization_table.find(it.op) != optimization_table.end() &&
+			check_if_number(it.arg1[0]) && check_if_number(it.arg2[0])){			
+			if (symbol_table[it.result] == REAL_NUM){
+				it.arg1 = std::to_string(cal(std::stof(it.arg1), std::stof(it.arg2), it.op));
+			}
+			else if (symbol_table[it.result] == INT_NUM){
+				it.arg1 = std::to_string(cal(std::stoi(it.arg1), std::stoi(it.arg2), it.op));
+			}
+			it.op = "=";
+			it.arg2 = "_";
+		}
+	}
+	buffer_tuple = result;
 }
 
 std::string Record::translate_conpound(std::vector<four_tuple> &buffer_tuple, newNode *node_exprs){
