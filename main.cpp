@@ -6,6 +6,10 @@
 #include "intermediate_code.h"
 #include "to_asm.h"
 
+#ifdef __GNUC__
+#pragma GCC optimize(2)
+#endif
+
 #ifdef _MSC_VER
 void init(std::string _filename){
 	//Delete old files:

@@ -7,7 +7,7 @@ Compiler.depend
 Compiler.layout
 /bin/
 /obj/
-saved_table
 output.txt
 output_compile.txt
 error.txt
+1.txt

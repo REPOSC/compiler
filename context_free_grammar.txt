@@ -2,7 +2,7 @@ Program -> void main ( ) Block               @ same @
 Mvar -> var                                  @ makeleaf @
 Mnum -> num                                  @ makeleaf @
 Type -> int                                  @ makeleaf @
-Type -> float                                @ makeleaf @
+Type -> double                               @ makeleaf @
 Block -> { Stmts }                           @ makenode conpound @
 Block -> Stmt                                @ same @
 Stmts -> { Stmts }                           @ same @
@@ -12,7 +12,8 @@ Stmts -> space                               @ null @
 Stmt -> Expr ;                               @ same @
 Stmt -> ;                                    @ null @
 Stmt -> return ;                             @ makeleaf @
-Stmt -> break ;                              @ makeleaf @
+Stmt -> break ;								 @ makeleaf @
+Stmt -> continue ;                           @ makeleaf @
 Stmt -> scanf ( SStmt )                      @ makenode scanf @
 SStmt -> Mvar SVars                          @ makenode conpound @
 SVars -> , Mvar SVars                        @ same @

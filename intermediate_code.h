@@ -72,6 +72,8 @@ public:
 	static void add_to_vars(newNode * root);
 	static void output_tuples(const std::vector<four_tuple> &);
 	static void adjust_jump(std::vector<four_tuple> &);
+	static void replace_break(std::vector<four_tuple> &, int begin, int end);
+	static void replace_continue(std::vector<four_tuple> &, int begin, int end);
 };
 
 int Record::address = 0;
@@ -408,8 +410,8 @@ std::string Record::translate_if(std::vector<four_tuple> &buffer_tuple, newNode 
 }
 
 std::string Record::translate_do(std::vector<four_tuple> &buffer_tuple, newNode *node_exprs){
-	newNode* cond = node_exprs->children[0];
-	newNode* stmts = node_exprs->children[1];//stmt
+	newNode* cond = node_exprs->children[1];
+	newNode* stmts = node_exprs->children[0];//stmt
 	int project_base_address = Record::address;//在整个for开始的时候截取开始的地址，作为base_address
 	//这个项目的基地址只用于之后的跳转语句定位，不作为输出语句的前序号
 
@@ -425,10 +427,11 @@ std::string Record::translate_do(std::vector<four_tuple> &buffer_tuple, newNode 
 	std::string str2 = translate_expr(buffer_stmts, stmts);
 
 	//先执行一遍语句
+	unsigned begin_tuple_num = buffer_tuple.size();
 	traverse_buffer(buffer_tuple, buffer_stmts);
-
+	unsigned end_tuple_num = buffer_tuple.size();
 	traverse_buffer(buffer_tuple, buffer_cond);
-
+	
 	//跳到执行语句的指令,str2是我取出的e2运行的总结果的临时变量
 	four_tuple temp_tuple = four_tuple{ "jnz", str1, "_", std::to_string(-int(buffer_stmts.size()) - int(buffer_cond.size())) };
 	buffer_tuple.push_back(temp_tuple);
@@ -440,7 +443,8 @@ std::string Record::translate_do(std::vector<four_tuple> &buffer_tuple, newNode 
 	buffer_tuple.push_back(temp_tuple);
 	SYMBOL_TABLE optimization_table;
 	//optimization(buffer_tuple, optimization_table);
-
+	replace_break(buffer_tuple, begin_tuple_num, end_tuple_num);
+	replace_continue(buffer_tuple, begin_tuple_num, end_tuple_num);
 	return "";
 }
 
@@ -449,13 +453,13 @@ std::string Record::translate_while(std::vector<four_tuple> &buffer_tuple, newNo
 	newNode *stmts = node_exprs->children[1];//stmt
 	//int project_base_address = Record::address;//在整个for开始的时候截取开始的地址，作为base_address
 	////这个项目的基地址只用于之后的跳转语句定位，不作为输出语句的前序号
-
 	if (cond->onetoken.type == NULL_TOKEN) {
 		Record::output_failure("Statement while's condition shouldn't be empty!");
 	}
 	std::vector<four_tuple> buffer_cond;
 	std::string str1 = translate_expr(buffer_cond, cond);
-
+	unsigned begin_tuple_num = buffer_tuple.size();
+	
 	std::vector<four_tuple> buffer_stmts;
 	std::string str2 = translate_expr(buffer_stmts, stmts);
 
@@ -477,13 +481,29 @@ std::string Record::translate_while(std::vector<four_tuple> &buffer_tuple, newNo
 	buffer_tuple.push_back(temp_tuple);
 	SYMBOL_TABLE optimization_table;
 	//optimization(buffer_tuple, optimization_table);
-
+	unsigned end_tuple_num = buffer_tuple.size();
+	replace_break(buffer_tuple, begin_tuple_num, end_tuple_num);
+	replace_continue(buffer_tuple, begin_tuple_num, end_tuple_num);
 	return "";
 }
 
-
+void Record::replace_break(std::vector<four_tuple> &buffer_tuple, int begin, int end){
+	for (int i = begin; i < end; ++i){
+		if (buffer_tuple[i].op == "j" && buffer_tuple[i].result == "break"){
+			buffer_tuple[i].result = std::to_string(end - i);
+		}
+	}
+}
+void Record::replace_continue(std::vector<four_tuple> &buffer_tuple, int begin, int end){
+	for (int i = begin; i < end; ++i){
+		if (buffer_tuple[i].op == "j" && buffer_tuple[i].result == "continue"){
+			buffer_tuple[i].result = std::to_string(begin - i);
+		}
+	}
+}
 //for也必须有buffer，而且不能直接写，因为for可能是嵌套在别的for里面的
 std::string Record::translate_for(std::vector<four_tuple> &buffer_tuple, newNode *node_for){
+	unsigned begin_tuple_num = buffer_tuple.size();
 	newNode *e1 = node_for->children[0];//for1
 	newNode *e2 = node_for->children[1];//for2
 	newNode *e3 = node_for->children[2];//for3
@@ -494,10 +514,10 @@ std::string Record::translate_for(std::vector<four_tuple> &buffer_tuple, newNode
 
 	std::vector<four_tuple> buffer_e1;
 	std::string str1 = translate_expr(buffer_e1, e1);
-
+	
 	std::vector<four_tuple> buffer_e2;
 	std::string str2 = translate_expr(buffer_e2, e2);
-
+	unsigned judge_tuple_num = buffer_e1.size() + buffer_e2.size() + begin_tuple_num + 2;
 	std::vector<four_tuple> buffer_e3;
 	std::string str3 = translate_expr(buffer_e3, e3);
 
@@ -532,7 +552,9 @@ std::string Record::translate_for(std::vector<four_tuple> &buffer_tuple, newNode
 
 	SYMBOL_TABLE optimization_table;
 	//optimization(buffer_tuple, optimization_table);
-
+	unsigned end_tuple_num = buffer_tuple.size();
+	replace_break(buffer_tuple, begin_tuple_num, end_tuple_num);
+	replace_continue(buffer_tuple, judge_tuple_num, end_tuple_num );
 	return "";
 }
 
@@ -550,15 +572,6 @@ std::string Record::judge_type_to_string(newNode* node_exprs)
 }
 
 std::string Record::translate_scanf(std::vector<four_tuple> &buffer_tuple, newNode *node_exprs){
-	/*for (int i = 0; i < node_exprs->children.size(); i++) {
-	newNode *input = node_exprs->children[i];
-	if (input->onetoken.type == NULL_TOKEN) {
-	continue;
-	}
-	four_tuple temp_tuple = Record::generate_scanf(judge_type_to_string(input));
-	buffer_tuple.push_back(temp_tuple);
-	}
-	*/
 	if (node_exprs->onetoken.type == NULL_TOKEN) {
 		return "";
 	}
@@ -780,6 +793,16 @@ std::string Record::translate_expr(std::vector<four_tuple> &buffer_tuple, newNod
 	//printf部分
 	else if (node_expr->onetoken == create_name_token1(STRANGE_TOKEN, "printf")) {
 		translate_printf(buffer_tuple, node_expr);
+		return "";
+	}
+	//break部分
+	else if (node_expr->onetoken.type == CONTROLLER && node_expr->onetoken.value.sym_name == Controller_BREAK){
+		buffer_tuple.push_back(four_tuple("j", "_", "_", "break"));
+		return "";
+	}
+	//continue部分
+	else if (node_expr->onetoken.type == CONTROLLER && node_expr->onetoken.value.sym_name == Controller_CONTINUE){
+		buffer_tuple.push_back(four_tuple("j", "_", "_", "continue"));
 		return "";
 	}
 	//为空直接返回

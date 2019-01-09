@@ -174,7 +174,7 @@ class ToAsm{
 			std::string s[] = {
 				"fld " + float_zero,
 				"fld " + tmp_var,
-				"fcomip st st(1)",
+				"fcomip st,st(1)",
 				"fstp " + float_zero,
 				"jz " + label(ti[2])
 			};
@@ -210,7 +210,7 @@ class ToAsm{
 				std::string s[] = {
 					"fld " + float_zero,
 					"fld " + ti[0],
-					"fcomip st st(1)",
+					"fcomip st,st(1)",
 					"fstp " + float_zero,
 					"jnz " + label(ti[2])
 				};
@@ -237,7 +237,7 @@ class ToAsm{
 			std::string s[] = {
 				"fld " + float_zero,
 				"fld " + tmp_var,
-				"fcomip st st(1)",
+				"fcomip st,st(1)",
 				"fstp " + float_zero,
 				"jnz " + label(ti[2])
 			};
@@ -1180,6 +1180,9 @@ class ToAsm{
 			if (symbol_table.find(ti[0]) == symbol_table.end()){
 				throw ERROR;
 			}
+		}
+		else if (judge_result == REAL_NUM) {
+			ti[0] = _tmp_insert(ti[0]);
 		}
 		if (judge_result == INT_NUM || judge_result == ABSTRACT_VAR && symbol_table[ti[0]] == INT_NUM){
 			result.push_back("invoke crt_printf,addr " + int_output_fmt_addr + "," + ti[0]);
