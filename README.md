@@ -28,7 +28,7 @@ output_compile.txt，前者输出到屏幕上，后者可以直接打开查看�
     * 输入命令 `g++ --std=c++11 main.cpp -o reposc.exe` 可以编译成可执行文件reposc.exe
     
     * 将所对应的文件和编译出的可执行文件放在一起，并带参数运行：
-      `./reposc 1.txt`
+      `reposc 1.txt`
 
 ### 3、安装masm32汇编器
 
